@@ -1,0 +1,661 @@
+z,System #,Benchmark,System
+0.7,21,9.9489,AcNH2 ... AcNH2
+0.8,21,-8.2227,AcNH2 ... AcNH2
+0.9,21,-14.93,AcNH2 ... AcNH2
+0.95,21,-16.03,AcNH2 ... AcNH2
+1,21,-16.26,AcNH2 ... AcNH2
+1.05,21,-15.94,AcNH2 ... AcNH2
+1.1,21,-15.26,AcNH2 ... AcNH2
+1.25,21,-12.42,AcNH2 ... AcNH2
+1.5,21,-8,AcNH2 ... AcNH2
+2,21,-3,AcNH2 ... AcNH2
+0.7,23,7.1093,AcNH2 ... Uracil
+0.8,23,-10.8271,AcNH2 ... Uracil
+0.9,23,-17.7,AcNH2 ... Uracil
+0.95,23,-18.89,AcNH2 ... Uracil
+1,23,-19.19,AcNH2 ... Uracil
+1.05,23,-18.9,AcNH2 ... Uracil
+1.1,23,-18.22,AcNH2 ... Uracil
+1.25,23,-15.21,AcNH2 ... Uracil
+1.5,23,-10.23,AcNH2 ... Uracil
+2,23,-4.65,AcNH2 ... Uracil
+0.7,20,12.7232,AcOH ... AcOH
+0.8,20,-9.3799,AcOH ... AcOH
+0.9,20,-17.45,AcOH ... AcOH
+0.95,20,-18.79,AcOH ... AcOH
+1,20,-19.09,AcOH ... AcOH
+1.05,20,-18.72,AcOH ... AcOH
+1.1,20,-17.94,AcOH ... AcOH
+1.25,20,-14.56,AcOH ... AcOH
+1.5,20,-9.21,AcOH ... AcOH
+2,20,-3.59,AcOH ... AcOH
+0.7,22,9.917,AcOH ... Uracil
+0.8,22,-10.3254,AcOH ... Uracil
+0.9,22,-17.9,AcOH ... Uracil
+0.95,22,-19.19,AcOH ... Uracil
+1,22,-19.49,AcOH ... Uracil
+1.05,22,-19.15,AcOH ... Uracil
+1.1,22,-18.41,AcOH ... Uracil
+1.25,22,-15.14,AcOH ... Uracil
+1.5,22,-9.86,AcOH ... Uracil
+2,22,-4.15,AcOH ... Uracil
+0.7,63,22.411,Benzene ...  AcOH
+0.8,63,3.2459,Benzene ...  AcOH
+0.9,63,-2.73,Benzene ...  AcOH
+0.95,63,-3.6,Benzene ...  AcOH
+1,63,-3.8,Benzene ...  AcOH
+1.05,63,-3.65,Benzene ...  AcOH
+1.1,63,-3.34,Benzene ...  AcOH
+1.25,63,-2.24,Benzene ...  AcOH
+1.5,63,-1.02,Benzene ...  AcOH
+2,63,-0.26,Benzene ...  AcOH
+0.7,52,11.7555,Benzene ...  AcOH (OH-pi)
+0.8,52,0.0463,Benzene ...  AcOH (OH-pi)
+0.9,52,-3.97,Benzene ...  AcOH (OH-pi)
+0.95,52,-4.58,Benzene ...  AcOH (OH-pi)
+1,52,-4.7,Benzene ...  AcOH (OH-pi)
+1.05,52,-4.55,Benzene ...  AcOH (OH-pi)
+1.1,52,-4.25,Benzene ...  AcOH (OH-pi)
+1.25,52,-3.13,Benzene ...  AcOH (OH-pi)
+1.5,52,-1.7,Benzene ...  AcOH (OH-pi)
+2,52,-0.55,Benzene ...  AcOH (OH-pi)
+0.7,47,21.851,Benzene ...  Benzene (TS)
+0.8,47,4.1893,Benzene ...  Benzene (TS)
+0.9,47,-1.64,Benzene ...  Benzene (TS)
+0.95,47,-2.58,Benzene ...  Benzene (TS)
+1,47,-2.87,Benzene ...  Benzene (TS)
+1.05,47,-2.82,Benzene ...  Benzene (TS)
+1.1,47,-2.6,Benzene ...  Benzene (TS)
+1.25,47,-1.77,Benzene ...  Benzene (TS)
+1.5,47,-0.83,Benzene ...  Benzene (TS)
+2,47,-0.22,Benzene ...  Benzene (TS)
+0.7,24,48.2886,Benzene ...  Benzene (pi-pi)
+0.8,24,11.2776,Benzene ...  Benzene (pi-pi)
+0.9,24,-0.23,Benzene ...  Benzene (pi-pi)
+0.95,24,-2.07,Benzene ...  Benzene (pi-pi)
+1,24,-2.74,Benzene ...  Benzene (pi-pi)
+1.05,24,-2.8,Benzene ...  Benzene (pi-pi)
+1.1,24,-2.58,Benzene ...  Benzene (pi-pi)
+1.25,24,-1.54,Benzene ...  Benzene (pi-pi)
+1.5,24,-0.49,Benzene ...  Benzene (pi-pi)
+2,24,-0.06,Benzene ...  Benzene (pi-pi)
+0.7,39,27.7131,Benzene ...  Cyclopentane
+0.8,39,4.9912,Benzene ...  Cyclopentane
+0.9,39,-2.16,Benzene ...  Cyclopentane
+0.95,39,-3.24,Benzene ...  Cyclopentane
+1,39,-3.57,Benzene ...  Cyclopentane
+1.05,39,-3.47,Benzene ...  Cyclopentane
+1.1,39,-3.17,Benzene ...  Cyclopentane
+1.25,39,-2.07,Benzene ...  Cyclopentane
+1.5,39,-0.9,Benzene ...  Cyclopentane
+2,39,-0.19,Benzene ...  Cyclopentane
+0.7,30,24.3135,Benzene ...  Ethene
+0.8,30,5.43,Benzene ...  Ethene
+0.9,30,-0.26,Benzene ...  Ethene
+0.95,30,-1.13,Benzene ...  Ethene
+1,30,-1.41,Benzene ...  Ethene
+1.05,30,-1.4,Benzene ...  Ethene
+1.1,30,-1.26,Benzene ...  Ethene
+1.25,30,-0.69,Benzene ...  Ethene
+1.5,30,-0.17,Benzene ...  Ethene
+2,30,0.01,Benzene ...  Ethene
+0.7,50,18.084,Benzene ...  Ethyne (CH-pi)
+0.8,50,3.1078,Benzene ...  Ethyne (CH-pi)
+0.9,50,-1.87,Benzene ...  Ethyne (CH-pi)
+0.95,50,-2.65,Benzene ...  Ethyne (CH-pi)
+1,50,-2.86,Benzene ...  Ethyne (CH-pi)
+1.05,50,-2.79,Benzene ...  Ethyne (CH-pi)
+1.1,50,-2.58,Benzene ...  Ethyne (CH-pi)
+1.25,50,-1.79,Benzene ...  Ethyne (CH-pi)
+1.5,50,-0.89,Benzene ...  Ethyne (CH-pi)
+2,50,-0.27,Benzene ...  Ethyne (CH-pi)
+0.7,56,12.4378,Benzene ...  MeNH2 (NH-pi)
+0.8,56,1.2239,Benzene ...  MeNH2 (NH-pi)
+0.9,56,-2.51,Benzene ...  MeNH2 (NH-pi)
+0.95,56,-3.09,Benzene ...  MeNH2 (NH-pi)
+1,56,-3.23,Benzene ...  MeNH2 (NH-pi)
+1.05,56,-3.12,Benzene ...  MeNH2 (NH-pi)
+1.1,56,-2.86,Benzene ...  MeNH2 (NH-pi)
+1.25,56,-1.95,Benzene ...  MeNH2 (NH-pi)
+1.5,56,-0.94,Benzene ...  MeNH2 (NH-pi)
+2,56,-0.26,Benzene ...  MeNH2 (NH-pi)
+0.7,55,11.5526,Benzene ...  MeOH (OH-pi)
+0.8,55,0.3693,Benzene ...  MeOH (OH-pi)
+0.9,55,-3.45,Benzene ...  MeOH (OH-pi)
+0.95,55,-4.05,Benzene ...  MeOH (OH-pi)
+1,55,-4.19,Benzene ...  MeOH (OH-pi)
+1.05,55,-4.07,Benzene ...  MeOH (OH-pi)
+1.1,55,-3.8,Benzene ...  MeOH (OH-pi)
+1.25,55,-2.8,Benzene ...  MeOH (OH-pi)
+1.5,55,-1.53,Benzene ...  MeOH (OH-pi)
+2,55,-0.52,Benzene ...  MeOH (OH-pi)
+0.7,40,19.7262,Benzene ...  Neopentane
+0.8,40,3.4316,Benzene ...  Neopentane
+0.9,40,-1.86,Benzene ...  Neopentane
+0.95,40,-2.68,Benzene ...  Neopentane
+1,40,-2.89,Benzene ...  Neopentane
+1.05,40,-2.8,Benzene ...  Neopentane
+1.1,40,-2.57,Benzene ...  Neopentane
+1.25,40,-1.7,Benzene ...  Neopentane
+1.5,40,-0.77,Benzene ...  Neopentane
+2,40,-0.19,Benzene ...  Neopentane
+0.7,57,27.5302,Benzene ...  Peptide (NH-pi)
+0.8,57,4.0037,Benzene ...  Peptide (NH-pi)
+0.9,57,-3.75,Benzene ...  Peptide (NH-pi)
+0.95,57,-4.96,Benzene ...  Peptide (NH-pi)
+1,57,-5.28,Benzene ...  Peptide (NH-pi)
+1.05,57,-5.14,Benzene ...  Peptide (NH-pi)
+1.1,57,-4.78,Benzene ...  Peptide (NH-pi)
+1.25,57,-3.41,Benzene ...  Peptide (NH-pi)
+1.5,57,-1.8,Benzene ...  Peptide (NH-pi)
+2,57,-0.62,Benzene ...  Peptide (NH-pi)
+0.7,49,21.9752,Benzene ...  Pyridine (TS)
+0.8,49,3.9054,Benzene ...  Pyridine (TS)
+0.9,49,-2.09,Benzene ...  Pyridine (TS)
+0.95,49,-3.04,Benzene ...  Pyridine (TS)
+1,49,-3.32,Benzene ...  Pyridine (TS)
+1.05,49,-3.26,Benzene ...  Pyridine (TS)
+1.1,49,-3.02,Benzene ...  Pyridine (TS)
+1.25,49,-2.1,Benzene ...  Pyridine (TS)
+1.5,49,-1.05,Benzene ...  Pyridine (TS)
+2,49,-0.33,Benzene ...  Pyridine (TS)
+0.7,27,52.6848,Benzene ...  Pyridine (pi-pi)
+0.8,27,11.8049,Benzene ...  Pyridine (pi-pi)
+0.9,27,-0.73,Benzene ...  Pyridine (pi-pi)
+0.95,27,-2.69,Benzene ...  Pyridine (pi-pi)
+1,27,-3.37,Benzene ...  Pyridine (pi-pi)
+1.05,27,-3.4,Benzene ...  Pyridine (pi-pi)
+1.1,27,-3.13,Benzene ...  Pyridine (pi-pi)
+1.25,27,-1.97,Benzene ...  Pyridine (pi-pi)
+1.5,27,-0.72,Benzene ...  Pyridine (pi-pi)
+2,27,-0.15,Benzene ...  Pyridine (pi-pi)
+0.7,28,42.1993,Benzene ...  Uracil (pi-pi)
+0.8,28,7.472,Benzene ...  Uracil (pi-pi)
+0.9,28,-3.53,Benzene ...  Uracil (pi-pi)
+0.95,28,-5.22,Benzene ...  Uracil (pi-pi)
+1,28,-5.71,Benzene ...  Uracil (pi-pi)
+1.05,28,-5.55,Benzene ...  Uracil (pi-pi)
+1.1,28,-5.08,Benzene ...  Uracil (pi-pi)
+1.25,28,-3.29,Benzene ...  Uracil (pi-pi)
+1.5,28,-1.36,Benzene ...  Uracil (pi-pi)
+2,28,-0.25,Benzene ...  Uracil (pi-pi)
+0.7,54,9.1613,Benzene ...  Water (OH-pi)
+0.8,54,0.1346,Benzene ...  Water (OH-pi)
+0.9,54,-2.8,Benzene ...  Water (OH-pi)
+0.95,54,-3.21,Benzene ...  Water (OH-pi)
+1,54,-3.27,Benzene ...  Water (OH-pi)
+1.05,54,-3.13,Benzene ...  Water (OH-pi)
+1.1,54,-2.9,Benzene ...  Water (OH-pi)
+1.25,54,-2.1,Benzene ...  Water (OH-pi)
+1.5,54,-1.16,Benzene ...  Water (OH-pi)
+2,54,-0.42,Benzene ...  Water (OH-pi)
+0.7,53,8.4424,Benzene ... AcNH2 (NH-pi)
+0.8,53,-0.6565,Benzene ... AcNH2 (NH-pi)
+0.9,53,-3.79,Benzene ... AcNH2 (NH-pi)
+0.95,53,-4.27,Benzene ... AcNH2 (NH-pi)
+1,53,-4.36,Benzene ... AcNH2 (NH-pi)
+1.05,53,-4.23,Benzene ... AcNH2 (NH-pi)
+1.1,53,-3.97,Benzene ... AcNH2 (NH-pi)
+1.25,53,-2.97,Benzene ... AcNH2 (NH-pi)
+1.5,53,-1.65,Benzene ... AcNH2 (NH-pi)
+2,53,-0.48,Benzene ... AcNH2 (NH-pi)
+0.7,38,15.1334,Cyclopentane ...  Cyclopentane
+0.8,38,2.0018,Cyclopentane ...  Cyclopentane
+0.9,38,-2.24,Cyclopentane ...  Cyclopentane
+0.95,38,-2.84,Cyclopentane ...  Cyclopentane
+1,38,-3,Cyclopentane ...  Cyclopentane
+1.05,38,-2.86,Cyclopentane ...  Cyclopentane
+1.1,38,-2.6,Cyclopentane ...  Cyclopentane
+1.25,38,-1.71,Cyclopentane ...  Cyclopentane
+1.5,38,-0.79,Cyclopentane ...  Cyclopentane
+2,38,-0.2,Cyclopentane ...  Cyclopentane
+0.7,37,15.9515,Cyclopentane ...  Neopentane
+0.8,37,2.6338,Cyclopentane ...  Neopentane
+0.9,37,-1.61,Cyclopentane ...  Neopentane
+0.95,37,-2.25,Cyclopentane ...  Neopentane
+1,37,-2.41,Cyclopentane ...  Neopentane
+1.05,37,-2.33,Cyclopentane ...  Neopentane
+1.1,37,-2.14,Cyclopentane ...  Neopentane
+1.25,37,-1.47,Cyclopentane ...  Neopentane
+1.5,37,-0.71,Cyclopentane ...  Neopentane
+2,37,-0.19,Cyclopentane ...  Neopentane
+0.7,44,9.4534,Ethene ...  Pentane
+0.8,44,0.8998,Ethene ...  Pentane
+0.9,44,-1.66,Ethene ...  Pentane
+0.95,44,-1.97,Ethene ...  Pentane
+1,44,-1.99,Ethene ...  Pentane
+1.05,44,-1.86,Ethene ...  Pentane
+1.1,44,-1.67,Ethene ...  Pentane
+1.25,44,-1.09,Ethene ...  Pentane
+1.5,44,-0.49,Ethene ...  Pentane
+2,44,-0.12,Ethene ...  Pentane
+0.7,60,8.8571,Ethyne ...  AcOH (OH-pi)
+0.8,60,-0.9336,Ethyne ...  AcOH (OH-pi)
+0.9,60,-4.28,Ethyne ...  AcOH (OH-pi)
+0.95,60,-4.78,Ethyne ...  AcOH (OH-pi)
+1,60,-4.86,Ethyne ...  AcOH (OH-pi)
+1.05,60,-4.69,Ethyne ...  AcOH (OH-pi)
+1.1,60,-4.39,Ethyne ...  AcOH (OH-pi)
+1.25,60,-3.26,Ethyne ...  AcOH (OH-pi)
+1.5,60,-1.77,Ethyne ...  AcOH (OH-pi)
+2,60,-0.56,Ethyne ...  AcOH (OH-pi)
+0.7,51,6.541,Ethyne ...  Ethyne (TS)
+0.8,51,0.6445,Ethyne ...  Ethyne (TS)
+0.9,51,-1.21,Ethyne ...  Ethyne (TS)
+0.95,51,-1.47,Ethyne ...  Ethyne (TS)
+1,51,-1.52,Ethyne ...  Ethyne (TS)
+1.05,51,-1.46,Ethyne ...  Ethyne (TS)
+1.1,51,-1.35,Ethyne ...  Ethyne (TS)
+1.25,51,-0.93,Ethyne ...  Ethyne (TS)
+1.5,51,-0.46,Ethyne ...  Ethyne (TS)
+2,51,-0.14,Ethyne ...  Ethyne (TS)
+0.7,45,14.3025,Ethyne ...  Pentane
+0.8,45,2.4018,Ethyne ...  Pentane
+0.9,45,-1.13,Ethyne ...  Pentane
+0.95,45,-1.63,Ethyne ...  Pentane
+1,45,-1.75,Ethyne ...  Pentane
+1.05,45,-1.68,Ethyne ...  Pentane
+1.1,45,-1.52,Ethyne ...  Pentane
+1.25,45,-0.98,Ethyne ...  Pentane
+1.5,45,-0.42,Ethyne ...  Pentane
+2,45,-0.1,Ethyne ...  Pentane
+0.7,59,5.0617,Ethyne ...  Water (CH-O)
+0.8,59,-0.6078,Ethyne ...  Water (CH-O)
+0.9,59,-2.52,Ethyne ...  Water (CH-O)
+0.95,59,-2.8,Ethyne ...  Water (CH-O)
+1,59,-2.85,Ethyne ...  Water (CH-O)
+1.05,59,-2.76,Ethyne ...  Water (CH-O)
+1.1,59,-2.6,Ethyne ...  Water (CH-O)
+1.25,59,-1.98,Ethyne ...  Water (CH-O)
+1.5,59,-1.17,Ethyne ...  Water (CH-O)
+2,59,-0.46,Ethyne ...  Water (CH-O)
+0.7,66,7.1508,MeNH2 ...  Pyridine
+0.8,66,-0.6878,MeNH2 ...  Pyridine
+0.9,66,-3.45,MeNH2 ...  Pyridine
+0.95,66,-3.88,MeNH2 ...  Pyridine
+1,66,-3.97,MeNH2 ...  Pyridine
+1.05,66,-3.85,MeNH2 ...  Pyridine
+1.1,66,-3.62,MeNH2 ...  Pyridine
+1.25,66,-2.71,MeNH2 ...  Pyridine
+1.5,66,-1.5,MeNH2 ...  Pyridine
+2,66,-0.49,MeNH2 ...  Pyridine
+0.7,10,6.971,MeNH2 ... MeNH2
+0.8,10,-0.9875,MeNH2 ... MeNH2
+0.9,10,-3.7,MeNH2 ... MeNH2
+0.95,10,-4.09,MeNH2 ... MeNH2
+1,10,-4.15,MeNH2 ... MeNH2
+1.05,10,-4.01,MeNH2 ... MeNH2
+1.1,10,-3.75,MeNH2 ... MeNH2
+1.25,10,-2.79,MeNH2 ... MeNH2
+1.5,10,-1.31,MeNH2 ... MeNH2
+2,10,-0.39,MeNH2 ... MeNH2
+0.7,9,4.8665,MeNH2 ... MeOH
+0.8,9,-0.9779,MeNH2 ... MeOH
+0.9,9,-2.81,MeNH2 ... MeOH
+0.95,9,-3.04,MeNH2 ... MeOH
+1,9,-3.04,MeNH2 ... MeOH
+1.05,9,-2.9,MeNH2 ... MeOH
+1.1,9,-2.69,MeNH2 ... MeOH
+1.25,9,-1.98,MeNH2 ... MeOH
+1.5,9,-1.1,MeNH2 ... MeOH
+2,9,-0.39,MeNH2 ... MeOH
+0.7,11,5.8687,MeNH2 ... Peptide
+0.8,11,-2.1691,MeNH2 ... Peptide
+0.9,11,-4.95,MeNH2 ... Peptide
+0.95,11,-5.36,MeNH2 ... Peptide
+1,11,-5.41,MeNH2 ... Peptide
+1.05,11,-5.24,MeNH2 ... Peptide
+1.1,11,-4.94,MeNH2 ... Peptide
+1.25,11,-3.21,MeNH2 ... Peptide
+1.5,11,-1.4,MeNH2 ... Peptide
+2,11,-0.46,MeNH2 ... Peptide
+0.7,12,5.3474,MeNH2 ... Water
+0.8,12,-3.6142,MeNH2 ... Water
+0.9,12,-6.75,MeNH2 ... Water
+0.95,12,-7.2,MeNH2 ... Water
+1,12,-7.25,MeNH2 ... Water
+1.05,12,-7.03,MeNH2 ... Water
+1.1,12,-6.66,MeNH2 ... Water
+1.25,12,-5.22,MeNH2 ... Water
+1.5,12,-3.15,MeNH2 ... Water
+2,12,-1.2,MeNH2 ... Water
+0.7,6,5.6457,MeOH ... MeNH2
+0.8,6,-3.6714,MeOH ... MeNH2
+0.9,6,-6.97,MeOH ... MeNH2
+0.95,6,-7.47,MeOH ... MeNH2
+1,6,-7.54,MeOH ... MeNH2
+1.05,6,-7.34,MeOH ... MeNH2
+1.1,6,-6.97,MeOH ... MeNH2
+1.25,6,-5.5,MeOH ... MeNH2
+1.5,6,-3.35,MeOH ... MeNH2
+2,6,-1.27,MeOH ... MeNH2
+0.7,5,5.575,MeOH ... MeOH
+0.8,5,-2.4924,MeOH ... MeOH
+0.9,5,-5.28,MeOH ... MeOH
+0.95,5,-5.69,MeOH ... MeOH
+1,5,-5.75,MeOH ... MeOH
+1.05,5,-5.58,MeOH ... MeOH
+1.1,5,-5.28,MeOH ... MeOH
+1.25,5,-4.14,MeOH ... MeOH
+1.5,5,-2.52,MeOH ... MeOH
+2,5,-1.01,MeOH ... MeOH
+0.7,7,4.9353,MeOH ... Peptide
+0.8,7,-4.3223,MeOH ... Peptide
+0.9,7,-7.63,MeOH ... Peptide
+0.95,7,-8.14,MeOH ... Peptide
+1,7,-8.22,MeOH ... Peptide
+1.05,7,-8.02,MeOH ... Peptide
+1.1,7,-7.66,MeOH ... Peptide
+1.25,7,-6.18,MeOH ... Peptide
+1.5,7,-3.65,MeOH ... Peptide
+2,7,-1.1,MeOH ... Peptide
+0.7,19,5.7361,MeOH ... Pyridine
+0.8,19,-3.4664,MeOH ... Pyridine
+0.9,19,-6.78,MeOH ... Pyridine
+0.95,19,-7.31,MeOH ... Pyridine
+1,19,-7.4,MeOH ... Pyridine
+1.05,19,-7.23,MeOH ... Pyridine
+1.1,19,-6.88,MeOH ... Pyridine
+1.25,19,-5.48,MeOH ... Pyridine
+1.5,19,-3.38,MeOH ... Pyridine
+2,19,-1.33,MeOH ... Pyridine
+0.7,8,5.297,MeOH ... Water
+0.8,8,-2.0754,MeOH ... Water
+0.9,8,-4.59,MeOH ... Water
+0.95,8,-4.95,MeOH ... Water
+1,8,-5,MeOH ... Water
+1.05,8,-4.85,MeOH ... Water
+1.1,8,-4.59,MeOH ... Water
+1.25,8,-3.59,MeOH ... Water
+1.5,8,-2.2,MeOH ... Water
+2,8,-0.91,MeOH ... Water
+0.7,36,6.4739,Neopentane ...  Neopentane
+0.8,36,0.5335,Neopentane ...  Neopentane
+0.9,36,-1.45,Neopentane ...  Neopentane
+0.95,36,-1.74,Neopentane ...  Neopentane
+1,36,-1.77,Neopentane ...  Neopentane
+1.05,36,-1.68,Neopentane ...  Neopentane
+1.1,36,-1.54,Neopentane ...  Neopentane
+1.25,36,-1.05,Neopentane ...  Neopentane
+1.5,36,-0.5,Neopentane ...  Neopentane
+2,36,-0.14,Neopentane ...  Neopentane
+0.7,35,17.1949,Neopentane ...  Pentane
+0.8,35,2.6946,Neopentane ...  Pentane
+0.9,35,-1.85,Neopentane ...  Pentane
+0.95,35,-2.49,Neopentane ...  Pentane
+1,35,-2.61,Neopentane ...  Pentane
+1.05,35,-2.48,Neopentane ...  Pentane
+1.1,35,-2.25,Neopentane ...  Pentane
+1.25,35,-1.5,Neopentane ...  Pentane
+1.5,35,-0.7,Neopentane ...  Pentane
+2,35,-0.18,Neopentane ...  Pentane
+0.7,62,8.051,Pentane ...  AcNH2
+0.8,62,-0.4204,Pentane ...  AcNH2
+0.9,62,-3.15,Pentane ...  AcNH2
+0.95,62,-3.5,Pentane ...  AcNH2
+1,62,-3.51,Pentane ...  AcNH2
+1.05,62,-3.32,Pentane ...  AcNH2
+1.1,62,-3.04,Pentane ...  AcNH2
+1.25,62,-2.12,Pentane ...  AcNH2
+1.5,62,-1.04,Pentane ...  AcNH2
+2,62,-0.27,Pentane ...  AcNH2
+0.7,61,4.4029,Pentane ...  AcOH
+0.8,61,-0.9957,Pentane ...  AcOH
+0.9,61,-2.7,Pentane ...  AcOH
+0.95,61,-2.9,Pentane ...  AcOH
+1,61,-2.88,Pentane ...  AcOH
+1.05,61,-2.73,Pentane ...  AcOH
+1.1,61,-2.52,Pentane ...  AcOH
+1.25,61,-1.79,Pentane ...  AcOH
+1.5,61,-0.78,Pentane ...  AcOH
+2,61,-0.17,Pentane ...  AcOH
+0.7,34,18.7521,Pentane ...  Pentane
+0.8,34,2.4072,Pentane ...  Pentane
+0.9,34,-2.86,Pentane ...  Pentane
+0.95,34,-3.62,Pentane ...  Pentane
+1,34,-3.77,Pentane ...  Pentane
+1.05,34,-3.61,Pentane ...  Pentane
+1.1,34,-3.3,Pentane ...  Pentane
+1.25,34,-2.24,Pentane ...  Pentane
+1.5,34,-1.05,Pentane ...  Pentane
+2,34,-0.27,Pentane ...  Pentane
+0.7,64,8.0997,Peptide ...  Ethene
+0.8,64,-0.0213,Peptide ...  Ethene
+0.9,64,-2.6,Peptide ...  Ethene
+0.95,64,-2.95,Peptide ...  Ethene
+1,64,-2.99,Peptide ...  Ethene
+1.05,64,-2.85,Peptide ...  Ethene
+1.1,64,-2.63,Peptide ...  Ethene
+1.25,64,-1.86,Peptide ...  Ethene
+1.5,64,-0.88,Peptide ...  Ethene
+2,64,-0.19,Peptide ...  Ethene
+0.7,46,9.9706,Peptide ...  Pentane
+0.8,46,-0.3853,Peptide ...  Pentane
+0.9,46,-3.75,Peptide ...  Pentane
+0.95,46,-4.21,Peptide ...  Pentane
+1,46,-4.24,Peptide ...  Pentane
+1.05,46,-4.05,Peptide ...  Pentane
+1.1,46,-3.73,Peptide ...  Pentane
+1.25,46,-2.63,Peptide ...  Pentane
+1.5,46,-1.19,Peptide ...  Pentane
+2,46,-0.29,Peptide ...  Pentane
+0.7,14,5.3464,Peptide ... MeNH2
+0.8,14,-3.5505,Peptide ... MeNH2
+0.9,14,-6.81,Peptide ... MeNH2
+0.95,14,-7.34,Peptide ... MeNH2
+1,14,-7.45,Peptide ... MeNH2
+1.05,14,-7.29,Peptide ... MeNH2
+1.1,14,-6.97,Peptide ... MeNH2
+1.25,14,-5.61,Peptide ... MeNH2
+1.5,14,-3.55,Peptide ... MeNH2
+2,14,-1.49,Peptide ... MeNH2
+0.7,13,5.206,Peptide ... MeOH
+0.8,13,-2.8404,Peptide ... MeOH
+0.9,13,-5.67,Peptide ... MeOH
+0.95,13,-6.11,Peptide ... MeOH
+1,13,-6.18,Peptide ... MeOH
+1.05,13,-6.03,Peptide ... MeOH
+1.1,13,-5.74,Peptide ... MeOH
+1.25,13,-4.6,Peptide ... MeOH
+1.5,13,-2.95,Peptide ... MeOH
+2,13,-1.3,Peptide ... MeOH
+0.7,15,4.1654,Peptide ... Peptide
+0.8,15,-4.7654,Peptide ... Peptide
+0.9,15,-8.02,Peptide ... Peptide
+0.95,15,-8.53,Peptide ... Peptide
+1,15,-8.62,Peptide ... Peptide
+1.05,15,-8.45,Peptide ... Peptide
+1.1,15,-8.1,Peptide ... Peptide
+1.25,15,-6.66,Peptide ... Peptide
+1.5,15,-4.42,Peptide ... Peptide
+2,15,-1.77,Peptide ... Peptide
+0.7,16,4.8764,Peptide ... Water
+0.8,16,-2.241,Peptide ... Water
+0.9,16,-4.7,Peptide ... Water
+0.95,16,-5.06,Peptide ... Water
+1,16,-5.12,Peptide ... Water
+1.05,16,-4.98,Peptide ... Water
+1.1,16,-4.74,Peptide ... Water
+1.25,16,-3.79,Peptide ... Water
+1.5,16,-2.45,Peptide ... Water
+2,16,-1.13,Peptide ... Water
+0.7,33,18.3264,Pyridine ...  Ethene
+0.8,33,3.7837,Pyridine ...  Ethene
+0.9,33,-0.89,Pyridine ...  Ethene
+0.95,33,-1.62,Pyridine ...  Ethene
+1,33,-1.86,Pyridine ...  Ethene
+1.05,33,-1.83,Pyridine ...  Ethene
+1.1,33,-1.67,Pyridine ...  Ethene
+1.25,33,-1.03,Pyridine ...  Ethene
+1.5,33,-0.37,Pyridine ...  Ethene
+2,33,-0.05,Pyridine ...  Ethene
+0.7,65,5.4278,Pyridine ...  Ethyne
+0.8,65,-1.1765,Pyridine ...  Ethyne
+0.9,65,-3.54,Pyridine ...  Ethyne
+0.95,65,-3.91,Pyridine ...  Ethyne
+1,65,-3.99,Pyridine ...  Ethyne
+1.05,65,-3.89,Pyridine ...  Ethyne
+1.1,65,-3.68,Pyridine ...  Ethyne
+1.25,65,-2.84,Pyridine ...  Ethyne
+1.5,65,-1.67,Pyridine ...  Ethyne
+2,65,-0.62,Pyridine ...  Ethyne
+0.7,58,37.0976,Pyridine ...  Pyridine (CH-N)
+0.8,58,5.9193,Pyridine ...  Pyridine (CH-N)
+0.9,58,-2.8,Pyridine ...  Pyridine (CH-N)
+0.95,58,-3.82,Pyridine ...  Pyridine (CH-N)
+1,58,-4.15,Pyridine ...  Pyridine (CH-N)
+1.05,58,-3.89,Pyridine ...  Pyridine (CH-N)
+1.1,58,-3.45,Pyridine ...  Pyridine (CH-N)
+1.25,58,-2.18,Pyridine ...  Pyridine (CH-N)
+1.5,58,-1.01,Pyridine ...  Pyridine (CH-N)
+2,58,-0.28,Pyridine ...  Pyridine (CH-N)
+0.7,48,16.8195,Pyridine ...  Pyridine (TS)
+0.8,48,2.3461,Pyridine ...  Pyridine (TS)
+0.9,48,-2.53,Pyridine ...  Pyridine (TS)
+0.95,48,-3.31,Pyridine ...  Pyridine (TS)
+1,48,-3.53,Pyridine ...  Pyridine (TS)
+1.05,48,-3.45,Pyridine ...  Pyridine (TS)
+1.1,48,-3.22,Pyridine ...  Pyridine (TS)
+1.25,48,-2.29,Pyridine ...  Pyridine (TS)
+1.5,48,-1.18,Pyridine ...  Pyridine (TS)
+2,48,-0.37,Pyridine ...  Pyridine (TS)
+0.7,25,46.147,Pyridine ...  Pyridine (pi-pi)
+0.8,25,10.1098,Pyridine ...  Pyridine (pi-pi)
+0.9,25,-1.32,Pyridine ...  Pyridine (pi-pi)
+0.95,25,-3.17,Pyridine ...  Pyridine (pi-pi)
+1,25,-3.83,Pyridine ...  Pyridine (pi-pi)
+1.05,25,-3.86,Pyridine ...  Pyridine (pi-pi)
+1.1,25,-3.58,Pyridine ...  Pyridine (pi-pi)
+1.25,25,-2.36,Pyridine ...  Pyridine (pi-pi)
+1.5,25,-0.96,Pyridine ...  Pyridine (pi-pi)
+2,25,-0.24,Pyridine ...  Pyridine (pi-pi)
+0.7,29,73.0688,Pyridine ...  Uracil (pi-pi)
+0.8,29,13.5236,Pyridine ...  Uracil (pi-pi)
+0.9,29,-3.74,Pyridine ...  Uracil (pi-pi)
+0.95,29,-6.17,Pyridine ...  Uracil (pi-pi)
+1,29,-6.81,Pyridine ...  Uracil (pi-pi)
+1.05,29,-6.58,Pyridine ...  Uracil (pi-pi)
+1.1,29,-5.97,Pyridine ...  Uracil (pi-pi)
+1.25,29,-3.87,Pyridine ...  Uracil (pi-pi)
+1.5,29,-1.78,Pyridine ...  Uracil (pi-pi)
+2,29,-0.53,Pyridine ...  Uracil (pi-pi)
+0.7,42,26.361,Uracil ...  Cyclopentane
+0.8,42,3.7489,Uracil ...  Cyclopentane
+0.9,42,-3.05,Uracil ...  Cyclopentane
+0.95,42,-3.97,Uracil ...  Cyclopentane
+1,42,-4.13,Uracil ...  Cyclopentane
+1.05,42,-3.92,Uracil ...  Cyclopentane
+1.1,42,-3.54,Uracil ...  Cyclopentane
+1.25,42,-2.29,Uracil ...  Cyclopentane
+1.5,42,-1.02,Uracil ...  Cyclopentane
+2,42,-0.25,Uracil ...  Cyclopentane
+0.7,31,17.2536,Uracil ...  Ethene
+0.8,31,2.144,Uracil ...  Ethene
+0.9,31,-2.57,Uracil ...  Ethene
+0.95,31,-3.24,Uracil ...  Ethene
+1,31,-3.38,Uracil ...  Ethene
+1.05,31,-3.24,Uracil ...  Ethene
+1.1,31,-2.96,Uracil ...  Ethene
+1.25,31,-1.99,Uracil ...  Ethene
+1.5,31,-0.93,Uracil ...  Ethene
+2,31,-0.25,Uracil ...  Ethene
+0.7,32,19.3439,Uracil ...  Ethyne
+0.8,32,2.5194,Uracil ...  Ethyne
+0.9,32,-2.79,Uracil ...  Ethyne
+0.95,32,-3.56,Uracil ...  Ethyne
+1,32,-3.74,Uracil ...  Ethyne
+1.05,32,-3.59,Uracil ...  Ethyne
+1.1,32,-3.29,Uracil ...  Ethyne
+1.25,32,-2.23,Uracil ...  Ethyne
+1.5,32,-1.04,Uracil ...  Ethyne
+2,32,-0.27,Uracil ...  Ethyne
+0.7,43,22.1765,Uracil ...  Neopentane
+0.8,43,2.8011,Uracil ...  Neopentane
+0.9,43,-2.87,Uracil ...  Neopentane
+0.95,43,-3.6,Uracil ...  Neopentane
+1,43,-3.7,Uracil ...  Neopentane
+1.05,43,-3.49,Uracil ...  Neopentane
+1.1,43,-3.15,Uracil ...  Neopentane
+1.25,43,-2.05,Uracil ...  Neopentane
+1.5,43,-0.92,Uracil ...  Neopentane
+2,43,-0.23,Uracil ...  Neopentane
+0.7,41,22.6252,Uracil ...  Pentane
+0.8,41,2.4499,Uracil ...  Pentane
+0.9,41,-3.83,Uracil ...  Pentane
+0.95,41,-4.69,Uracil ...  Pentane
+1,41,-4.84,Uracil ...  Pentane
+1.05,41,-4.6,Uracil ...  Pentane
+1.1,41,-4.08,Uracil ...  Pentane
+1.25,41,-2.44,Uracil ...  Pentane
+1.5,41,-0.98,Uracil ...  Pentane
+2,41,-0.21,Uracil ...  Pentane
+0.7,26,40.0197,Uracil ...  Uracil (pi-pi)
+0.8,26,3.6735,Uracil ...  Uracil (pi-pi)
+0.9,26,-7.86,Uracil ...  Uracil (pi-pi)
+0.95,26,-9.5,Uracil ...  Uracil (pi-pi)
+1,26,-9.82,Uracil ...  Uracil (pi-pi)
+1.05,26,-9.43,Uracil ...  Uracil (pi-pi)
+1.1,26,-8.69,Uracil ...  Uracil (pi-pi)
+1.25,26,-6.07,Uracil ...  Uracil (pi-pi)
+1.5,26,-3.1,Uracil ...  Uracil (pi-pi)
+2,26,-0.99,Uracil ...  Uracil (pi-pi)
+0.7,17,10.2402,Uracil ... Uracil (BP)
+0.8,17,-8.6144,Uracil ... Uracil (BP)
+0.9,17,-15.7,Uracil ... Uracil (BP)
+0.95,17,-16.9,Uracil ... Uracil (BP)
+1,17,-17.18,Uracil ... Uracil (BP)
+1.05,17,-16.86,Uracil ... Uracil (BP)
+1.1,17,-16.17,Uracil ... Uracil (BP)
+1.25,17,-13.15,Uracil ... Uracil (BP)
+1.5,17,-8.35,Uracil ... Uracil (BP)
+2,17,-3.33,Uracil ... Uracil (BP)
+0.7,3,4.3744,Water ... MeNH2
+0.8,3,-3.726,Water ... MeNH2
+0.9,3,-6.49,Water ... MeNH2
+0.95,3,-6.87,Water ... MeNH2
+1,3,-6.88,Water ... MeNH2
+1.05,3,-6.65,Water ... MeNH2
+1.1,3,-6.28,Water ... MeNH2
+1.25,3,-4.92,Water ... MeNH2
+1.5,3,-2.98,Water ... MeNH2
+2,3,-1.14,Water ... MeNH2
+0.7,2,5.1065,Water ... MeOH
+0.8,2,-2.6002,Water ... MeOH
+0.9,2,-5.19,Water ... MeOH
+0.95,2,-5.55,Water ... MeOH
+1,2,-5.57,Water ... MeOH
+1.05,2,-5.38,Water ... MeOH
+1.1,2,-5.08,Water ... MeOH
+1.25,2,-3.94,Water ... MeOH
+1.5,2,-2.39,Water ... MeOH
+2,2,-0.95,Water ... MeOH
+0.7,4,4.0343,Water ... Peptide
+0.8,4,-4.6388,Water ... Peptide
+0.9,4,-7.63,Water ... Peptide
+0.95,4,-8.06,Water ... Peptide
+1,4,-8.08,Water ... Peptide
+1.05,4,-7.84,Water ... Peptide
+1.1,4,-7.46,Water ... Peptide
+1.25,4,-5.99,Water ... Peptide
+1.5,4,-3.83,Water ... Peptide
+2,4,-1.44,Water ... Peptide
+0.7,18,4.8358,Water ... Pyridine
+0.8,18,-3.5043,Water ... Pyridine
+0.9,18,-6.39,Water ... Pyridine
+0.95,18,-6.8,Water ... Pyridine
+1,18,-6.83,Water ... Pyridine
+1.05,18,-6.62,Water ... Pyridine
+1.1,18,-6.27,Water ... Pyridine
+1.25,18,-4.93,Water ... Pyridine
+1.5,18,-3.01,Water ... Pyridine
+2,18,-1.19,Water ... Pyridine
+0.7,1,4.7623,Water ... Water
+0.8,1,-2.2503,Water ... Water
+0.9,1,-4.57,Water ... Water
+0.95,1,-4.88,Water ... Water
+1,1,-4.89,Water ... Water
+1.05,1,-4.72,Water ... Water
+1.1,1,-4.45,Water ... Water
+1.25,1,-3.46,Water ... Water
+1.5,1,-2.11,Water ... Water
+2,1,-0.87,Water ... Water
