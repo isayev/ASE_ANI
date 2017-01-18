@@ -225,7 +225,7 @@ class ANID3(Calculator):
 
         energy_ani = 0.0
         forces_ani = np.zeros((natoms, 3))
-        stress_ani = 0.0 
+        stress_ani = np.zeros(6)
 
         # Set the conformers in NeuroChem
         nc.setConformers(confs=np.expand_dims(xyz, axis=0).astype(np.float32),types=atom_symbols)
@@ -343,7 +343,7 @@ class ANI(Calculator):
 
         energy_ani = 0.0
         forces_ani = np.zeros((natoms, 3))
-        stress_ani = 0.0 
+        stress_ani = np.zeros((1, 3))
 
         # Set the conformers in NeuroChem
         nc.setConformers(confs=np.expand_dims(xyz, axis=0).astype(np.float32),types=atom_symbols)
