@@ -4,7 +4,7 @@ import numpy as np
 import os, sys
 from ase.units import Bohr
 from ase.calculators.calculator import Calculator, all_changes
-from ased3._d3 import d3
+#from ased3._d3 import d3
 
 # PATH to ANI must be defined
 try:
@@ -26,15 +26,15 @@ import pyNeuroChem as pync
 global nc
 
 # Set required files for pyNeuroChem
-cnstfile = anipath + '/ANI-1-ntwk/rHCNO-4.6A_32-3.1A_a8-8.params'
-saefile  = anipath + '/ANI-1-ntwk/sae_6-31gd.dat'
-nnfdir   = anipath + '/ANI-1-ntwk/networks/'
+cnstfile = anipath + '/rHCNO-4.6A_16-3.1A_a4-8.params'
+saefile  = anipath + '/../sae_6-31gd.dat'
+nnfdir   = anipath + '/networks/'
 
 # Construct pyNeuroChem class
 nc = pync.pyNeuroChem(cnstfile, saefile, nnfdir, gpuid)
 
 
-d3_calc = d3.d3_calc
+#d3_calc = d3.d3_calc
 
 alp = 14.
 
