@@ -4,12 +4,13 @@ import os, sys
 
 from ase.units import Bohr
 from ase.calculators.calculator import Calculator, all_changes
-
 try:
     from ased3._d3 import d3
 except ImportError:
     print('van Der Waals correction will be unavailable. Please install ased3')
     pass
+
+import pyNeuroChem as pync
 
 # ANI energy a.u. to eV conversion
 global conv_au_ev
@@ -20,10 +21,22 @@ class ANI(Calculator):
     default_parameters = {'xc': 'ani'}
 
     nolabel = True
-    def __init__(self, nc, **kwargs):
+    def __init__(self, build=True, **kwargs):
         Calculator.__init__(self, **kwargs)
-        self.nc = nc
+
+        if build:
+            anipath = os.path.dirname(__file__)
+            cnstfile = anipath + '/../ANI-c08e-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
+            saefile = anipath + '/../ANI-c08e-ntwk/sae_6-31gd.dat'
+            nnfdir = anipath + '/../ANI-c08e-ntwk/networks/'
+            print(cnstfile)
+            self.nc = pync.molecule(cnstfile, saefile, nnfdir, 0)
+
         self.Setup=True
+        print('CON1')
+
+    def setnc(self,nc):
+        self.nc = nc
 
     def calculate(self, atoms=None, properties=['energy'],
                    system_changes=all_changes):
