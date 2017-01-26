@@ -6,8 +6,10 @@ from ase.units import Bohr
 from ase.calculators.calculator import Calculator, all_changes
 try:
     from ased3._d3 import d3
+    d3present = True
 except ImportError:
     print('van Der Waals correction will be unavailable. Please install ased3')
+    d3present = False
     pass
 
 import pyNeuroChem as pync
@@ -33,7 +35,6 @@ class ANI(Calculator):
             self.nc = pync.molecule(cnstfile, saefile, nnfdir, 0)
 
         self.Setup=True
-        print('CON1')
 
     def setnc(self,nc):
         self.nc = nc

@@ -22,7 +22,7 @@ import pyNeuroChem as pync
 # Construct pyNeuroChem class
 #nc = pync.molecule(cnstfile, saefile, nnfdir, 0)
 
-mol = read('/home/jujuman/Research/ChiralTest/mol1.xyz')
+mol = read('examples/data/water.xyz')
 
 mol.set_calculator(ANI())
 #mol.calc.setnc(nc)
