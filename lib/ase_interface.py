@@ -31,7 +31,6 @@ class ANI(Calculator):
             cnstfile = anipath + '/../ANI-c08e-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
             saefile = anipath + '/../ANI-c08e-ntwk/sae_6-31gd.dat'
             nnfdir = anipath + '/../ANI-c08e-ntwk/networks/'
-            print(cnstfile)
             self.nc = pync.molecule(cnstfile, saefile, nnfdir, 0)
 
         self.Setup=True
@@ -231,7 +230,6 @@ if d3present:
                 cnstfile = anipath + '/../ANI-c08e-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
                 saefile = anipath + '/../ANI-c08e-ntwk/sae_6-31gd.dat'
                 nnfdir = anipath + '/../ANI-c08e-ntwk/networks/'
-                print(cnstfile)
                 self.nc = pync.molecule(cnstfile, saefile, nnfdir, 0)
 
             self.Setup = True
