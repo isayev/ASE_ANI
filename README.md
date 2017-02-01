@@ -18,7 +18,7 @@ Clone this repository into desired folder and add environmental variables from `
 For use cases please refer to examples folder with several iPython notebooks
 
 ## Citation
-If you use this code, plice cite:
+If you use this code, please cite:
 
 Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. *ANI-1: An extensible neural network potential with DFT accuracy at force field computational cost*. [arXiv:1610.08935](https://arxiv.org/abs/1610.08935)
 
