@@ -44,10 +44,9 @@ print('[ANI Optimization - Total time:', time.time() - start_time, 'seconds]')
 ef = mol.get_potential_energy()
 print("Final Energy: ",ef)
 
-
 # Write visualization of molecule
-f = open("optmol.xyz",'w')
-f.write('\n' + str(len(mol)) + '\n')
-for i in mol:
-    f.write(str(i.symbol) + ' ' + str(i.x) + ' ' + str(i.y) + ' ' + str(i.z) + '\n')
-f.close()
+#f = open("optmol.xyz",'w')
+#f.write('\n' + str(len(mol)) + '\n')
+#for i in mol:
+#    f.write(str(i.symbol) + ' ' + str(i.x) + ' ' + str(i.y) + ' ' + str(i.z) + '\n')
+#f.close()
