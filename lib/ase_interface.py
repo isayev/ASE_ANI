@@ -48,7 +48,7 @@ class ANI(Calculator):
         #start_time2 = time.time()
         ## make up for stress
         ## TODO
-        stress_ani = np.zeros((1, 3))
+        stress_ani = np.zeros(6)
 
         
         if self.Setup or self.nc.request_setup():
@@ -98,7 +98,7 @@ class ANI(Calculator):
 
         ## make up for stress
         ## TODO
-        stress_ani = np.zeros((1, 3))
+        stress_ani = np.zeros(6)
 
         if self.Setup or self.nc.request_setup():
             # Setup molecule for MD
@@ -322,7 +322,7 @@ if d3present:
 
             ## make up for stress
             ## TODO
-            stress_ani = 0#np.zeros((1, 3))
+            stress_ani = 0
 
             if self.Setup or self.nc.request_setup():
                 # Setup molecule for MD
