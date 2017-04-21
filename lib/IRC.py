@@ -103,7 +103,7 @@ class IRC(Optimizer):
         for attr in self._dump_attr:
             setattr(self, data[attr])
 
-    def run(self, fmax=0.05, steps=1000, maxmicro=1000, yield_path=True):
+    def run(self, fmax=0.05, steps=1000, maxmicro=1000):
         self.fmax = fmax
         step = 0
         pass_high_grad = False
@@ -122,14 +122,13 @@ class IRC(Optimizer):
                 self.is_converged = True
                 break
             self.S += self.calc_path(p0, p1, self.atoms.get_positions() * self.M)
-            self.trajectory.write(atoms)
+            self.trajectory.write(self.atoms)
             f = self.atoms.get_forces()
             angle = calc_angle(p0, p1, self.atoms.get_positions() * self.M)
             self.logfile.write('IRC: step {:3d} path {:.4f} energy {:.5f} unconstrained force {:5f} angle {:.2f}\n'.format(
                 step, self.S, e1, la.norm(f), angle
             ))
-            if yield_path:
-                yield self.S, e1, la.norm(f), angle
+            yield self.S, e1, la.norm(f), angle
             if not self.converged(f * 3):
                 pass_high_grad = True
             elif pass_high_grad and self.converged(f / 3):
@@ -273,5 +272,6 @@ if __name__ == '__main__':
     atoms.set_calculator(mopac_calc)
 
     irccalc = IRC(atoms, stride=0.15, mw=True, forward=True, trajectory='ts1.traj')
-    irccalc.run(yield_path=False)
+    for _ in irccalc.run():
+        pass
 
