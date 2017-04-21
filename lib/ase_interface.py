@@ -1,9 +1,11 @@
 import numpy as np
 import os, sys
-#import time
+from math import sqrt
+import time
 
 from ase.units import Bohr
 from ase.calculators.calculator import Calculator, all_changes
+from ase.neighborlist import NeighborList
 try:
     from ased3._d3 import d3
     d3present = True
@@ -20,6 +22,7 @@ conv_au_ev = 27.21138505
 
 class ANI(Calculator):
     implemented_properties = ['energy', 'forces', 'stress']
+    #implemented_properties = ['energy', 'forces']
     default_parameters = {'xc': 'ani'}
 
     nolabel = True
@@ -42,6 +45,7 @@ class ANI(Calculator):
                    system_changes=all_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
+        #start_time2 = time.time()
         ## make up for stress
         ## TODO
         stress_ani = np.zeros((1, 3))
@@ -53,15 +57,39 @@ class ANI(Calculator):
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
             self.nc.setMolecule(coords=xyz.astype(np.float32),types=atom_symbols)
+
+            if self.nc.getPBC():
+                self.nc.setCell((self.atoms.get_cell()).astype(np.float32))
+                # radial cutoff = 4.6 ==> sphere radii = 2.3
+                self.nlR = NeighborList([2.3]*len(self.atoms),self_interaction=False,bothways=True)
+                self.nlR.update(self.atoms)
+                self.__update_neighbors()
+
             self.Setup=False
         else:
             xyz = self.atoms.get_positions()
             # Set the conformers in NeuroChem
             self.nc.setCoordinates(coords=xyz.astype(np.float32))
 
+            if self.nc.getPBC():
+                start_time = time.time()
+                rUpdate = self.nlR.update(self.atoms)
+                end_time = time.time()
+                if rUpdate:
+                    print('Neighbor List Updated. Time:',end_time-start_time)
+                self.__update_neighbors()
+
+        #start_time2 = time.time()
         self.results['energy'] = conv_au_ev*self.nc.energy()[0]
         self.results['forces'] = conv_au_ev*self.nc.force()
         self.results['stress'] = conv_au_ev*stress_ani
+        #end_time2 = time.time()
+        #print('ANI Time:', end_time2 - start_time2)
+
+    def __update_neighbors(self):
+        for a in range(0,len(self.atoms)):
+            indices,offsets = self.nlR.get_neighbors(a)
+            self.nc.setNeighbors(ind=a,indices=indices.astype(np.int32),offsets=offsets.astype(np.float32))
 
 
     def get_atomicenergies(self, atoms=None, properties=['energy'],
