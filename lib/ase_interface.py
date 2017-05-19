@@ -26,7 +26,7 @@ class ANI(Calculator):
     default_parameters = {'xc': 'ani'}
 
     nolabel = True
-    def __init__(self, build=True,gpuid=0, **kwargs):
+    def __init__(self, build=True,gpuid=0,reslist=[],**kwargs):
         Calculator.__init__(self, **kwargs)
 
         if build:
@@ -37,6 +37,7 @@ class ANI(Calculator):
             self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
 
         self.Setup=True
+        self.reslist=reslist
 
     def setnc(self,nc):
         self.nc = nc
@@ -49,7 +50,7 @@ class ANI(Calculator):
         ## make up for stress
         ## TODO
         #stress_ani = np.zeros((1, 3))
-        stress_ani = np.zeros((6))
+        stress_ani = np.zeros(6)
 
         
         if self.Setup or self.nc.request_setup():
@@ -71,7 +72,13 @@ class ANI(Calculator):
         #start_time2 = time.time()
         self.results['energy'] = conv_au_ev*self.nc.energy()[0]
         if 'forces' in properties:
-            self.results['forces'] = conv_au_ev*self.nc.force()
+            forces = conv_au_ev*self.nc.force()
+
+            # restrain atoms
+            for i in self.reslist:
+                forces[i] = 0.0
+
+            self.results['forces'] = forces
         self.results['stress'] = conv_au_ev*stress_ani
         #end_time2 = time.time()
         #print('ANI Time:', end_time2 - start_time2)
