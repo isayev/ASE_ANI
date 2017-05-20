@@ -20,5 +20,5 @@ For use cases please refer to examples folder with several iPython notebooks
 ## Citation
 If you use this code, please cite:
 
-Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. *ANI-1: An extensible neural network potential with DFT accuracy at force field computational cost*. [arXiv:1610.08935](https://arxiv.org/abs/1610.08935)
+Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. *ANI-1: An extensible neural network potential with DFT accuracy at force field computational cost*. Chemical Science, 2017, DOI: 10.1039/C6SC05720A 
 
