@@ -63,7 +63,7 @@ class ANI(Calculator):
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
             self.nc.setMolecule(coords=xyz.astype(np.float32),types=atom_symbols)
-            self.nc.setPBC(bool(self.atoms.get_pbc()[0]),bool(self.atoms.get_pbc()[1]),bool(self.atoms.get_pbc()[2]))
+            self.nc.setPBC(self.atoms.get_pbc()[0],self.atoms.get_pbc()[1],self.atoms.get_pbc()[2])
 
             self.Setup=False
         else:
@@ -71,7 +71,11 @@ class ANI(Calculator):
             # Set the conformers in NeuroChem
             self.nc.setCoordinates(coords=xyz.astype(np.float32))
 
-        self.nc.setCell((self.atoms.get_cell()).astype(np.float32),(np.linalg.inv(self.atoms.get_cell())).astype(np.float32))
+
+            # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
+            pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros((3,3), dtype=np.float32)
+            self.nc.setCell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
+            #self.nc.setCell((self.atoms.get_cell()).astype(np.float32),(np.linalg.inv(self.atoms.get_cell())).astype(np.float32))
 
         #start_time2 = time.time()
         self.results['energy'] = conv_au_ev*self.nc.energy()[0]
