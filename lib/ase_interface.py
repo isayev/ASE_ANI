@@ -20,6 +20,10 @@ import pyNeuroChem as pync
 global conv_au_ev
 conv_au_ev = 27.21138505
 
+#import numpy as np
+#import matplotlib.mlab as mlab
+#import matplotlib.pyplot as plt
+
 class ANI(Calculator):
     implemented_properties = ['energy', 'forces', 'stress']
     #implemented_properties = ['energy', 'forces']
@@ -82,6 +86,33 @@ class ANI(Calculator):
         self.results['stress'] = conv_au_ev*stress_ani
         #end_time2 = time.time()
         #print('ANI Time:', end_time2 - start_time2)
+
+    def __update_neighbors(self):
+        #print('------------------------')
+        #szs = []
+        #an = self.atoms.get_atomic_numbers()
+        for a in range(0,len(self.atoms)):
+            indices,offsets = self.nlR.get_neighbors(a)
+            #if an[a] == 8:
+                #print(an[a])
+                #szs.append(len(indices))
+            self.nc.setNeighbors(ind=a,indices=indices.astype(np.int32),offsets=offsets.astype(np.float32))
+
+        #indices, offsets = self.nlR.get_neighbors(302)
+        #f = open('test2.xyz','w')
+        #f.write(str(len(indices))+'\n')
+        #f.write("   comment\n")
+        #an = self.atoms.get_atomic_numbers()
+        #for i, offset in zip(indices, offsets):
+        #    xyz = self.atoms.positions[i]
+        #    f.write(str(an[i]) + ' ' + str(xyz[0]) + ' ' + str(xyz[1]) + ' ' + str(xyz[2]) + '\n')
+
+        #print(szs)
+        #plt.hist(szs, max(szs)-min(szs), normed=1, facecolor='green', alpha=0.75)
+        #plt.xlabel('Number of neighbors')
+        #plt.ylabel('Count')
+        #plt.show()
+        #print('------------------------')
 
     def get_atomicenergies(self, atoms=None, properties=['energy'],
                   system_changes=all_changes):
