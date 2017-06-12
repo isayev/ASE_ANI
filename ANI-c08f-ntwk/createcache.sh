@@ -1,0 +1,32 @@
+cachegen -f ../dnntsgdb11_01/testdata/*_train.dat -p 1.0 -a 0 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_02/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_03/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_04/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_05/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_06/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_07/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_08/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_aminoacids/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_dipeptides/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_dipeptides/testdata2/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_fixdata/data/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_begdb/testdata/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_dissociation/scans_cc_bonds_dft/double/data/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_dissociation/scans_cc_bonds_dft/single/data/*_train.dat -p 1.0 -a 1 -s _train -e ../sae_6-31gd.dat
+
+cachegen -f ../dnntsgdb11_01/testdata/*_valid.dat -p 1.0 -a 0 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_02/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_03/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_04/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_05/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_06/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_07/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnntsgdb11_08/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnnts/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_dipeptides/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_dipeptides/testdata2/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_fixdata/data/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_begdb/testdata/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_dissociation/scans_cc_bonds_dft/double/data/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+cachegen -f ../dnnts_dissociation/scans_cc_bonds_dft/single/data/*_valid.dat -p 1.0 -a 1 -s _valid -e ../sae_6-31gd.dat
+
