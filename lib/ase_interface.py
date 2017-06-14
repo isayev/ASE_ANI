@@ -35,9 +35,9 @@ class ANI(Calculator):
 
         if build:
             anipath = os.path.dirname(__file__)
-            cnstfile = anipath + '/../ANI-c08e-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
-            saefile = anipath + '/../ANI-c08e-ntwk/sae_6-31gd.dat'
-            nnfdir = anipath + '/../ANI-c08e-ntwk/networks/'
+            cnstfile = anipath + '/../ANI-c08f-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
+            saefile = anipath + '/../ANI-c08f-ntwk/sae_6-31gd.dat'
+            nnfdir = anipath + '/../ANI-c08f-ntwk/networks/'
             self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
 
         self.Setup=True
