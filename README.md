@@ -4,6 +4,7 @@
 ### Works only under linux 
 
 This is a prototype interface for ANI-1 neural net potential for The Atomic Simulation Environment (ASE) 
+Current ANI-1.1 potential implements CHNO elements and experimental supprot for S and F.
 
 ##REQUIREMENTS:
 * Python 3.5 (we recommend [Anaconda](https://www.continuum.io/downloads) distribution)
@@ -20,5 +21,5 @@ For use cases please refer to examples folder with several iPython notebooks
 ## Citation
 If you use this code, please cite:
 
-Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. *ANI-1: An extensible neural network potential with DFT accuracy at force field computational cost*. Chemical Science, 2017, DOI: 10.1039/C6SC05720A 
+Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. *ANI-1: An extensible neural network potential with DFT accuracy at force field computational cost*. Chemical Science, 2017, DOI: [10.1039/C6SC05720A](http://pubs.rsc.org/en/content/articlelanding/2017/sc/c6sc05720a)
 
