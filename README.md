@@ -3,8 +3,7 @@
 ### NOTICE: Python binaries built for python 3.5 and CUDA 8
 ### Works only under linux 
 
-This is a prototype interface for ANI-1 neural net potential for The Atomic Simulation Environment (ASE) 
-Current ANI-1.1 potential implements CHNO elements and experimental supprot for S and F.
+This is a prototype interface for ANI-1 neural net potential for The Atomic Simulation Environment (ASE). Current ANI-1.1 potential implements CHNO elements and experimental supprot for S and F.
 
 ##REQUIREMENTS:
 * Python 3.5 (we recommend [Anaconda](https://www.continuum.io/downloads) distribution)
