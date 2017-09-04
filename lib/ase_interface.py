@@ -262,8 +262,10 @@ if d3present:
 
 
     # Class of ANI + D3 energies
+    
     class ANID3(Calculator):
         implemented_properties = ['energy', 'forces', 'stress']
+    
         default_parameters = {'xc': 'ani',
                               'bj': True,
                               'threebody': True,
@@ -274,48 +276,51 @@ if d3present:
                               'rs18': None,
                               's6': None,
                               'calculator': None}
-
+    
+    
         nolabel = True
-
-        def __init__(self, build=True, **kwargs):
+    
+        def __init__(self, build=True, gpuid=0, reslist=[], **kwargs):
             Calculator.__init__(self, **kwargs)
+    
             if build:
                 anipath = os.path.dirname(__file__)
-                cnstfile = anipath + '/../ANI-c08e-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
-                saefile = anipath + '/../ANI-c08e-ntwk/sae_6-31gd.dat'
-                nnfdir = anipath + '/../ANI-c08e-ntwk/networks/'
-                self.nc = pync.molecule(cnstfile, saefile, nnfdir, 0)
-
+                cnstfile = anipath + '/../ANI-c08f-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
+                saefile = anipath + '/../ANI-c08f-ntwk/sae_6-31gd.dat'
+                nnfdir = anipath + '/../ANI-c08f-ntwk/networks/'
+                self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
+    
             self.Setup = True
-
-            def setnc(self, nc):
-                self.nc = nc
-
+            self.reslist = reslist
+    
+        def setnc(self, nc):
+            self.nc = nc
+    
         def calculate(self, atoms=None, properties=['energy'],
                       system_changes=all_changes):
             Calculator.calculate(self, atoms, properties, system_changes)
-
+    
             xc = self.parameters.xc.lower()
             bj = self.parameters.bj
             threebody = self.parameters.threebody
             rcut = self.parameters.rcut
             rcutcn = self.parameters.rcutcn
             calculator = self.parameters.calculator
-
+    
             if bj:
                 damp = dampbj
             else:
                 damp = damp0
-
+    
             rs6 = s18 = rs18 = s6 = None
-
+    
             try:
                 rs6, s18, rs18, s6 = damp[xc]
             except KeyError:
                 unknown_functional = True
             else:
                 unknown_functional = False
-
+    
             if self.parameters.s6 is not None:
                 s6 = self.parameters.s6
             if self.parameters.s18 is not None:
@@ -324,11 +329,11 @@ if d3present:
                 rs6 = self.parameters.rs6
             if self.parameters.rs18 is not None:
                 rs18 = self.parameters.rs18
-
+    
             if unknown_functional and None in (s6, s18, rs6, rs18):
                 raise ValueError("Unknown functional {}! \
                         Please specify damping parameters.".format(xc))
-
+    
             # D3 calculation part
             energy_d3, forces_d3, stress_d3 = d3_calc(
                 self.atoms.get_atomic_numbers(),
@@ -345,11 +350,80 @@ if d3present:
                 pbc=self.atoms.get_pbc(),
                 bj=bj,
                 threebody=threebody)
-
+    
             ## make up for stress
             ## TODO
-            stress_ani = 0#np.zeros((1, 3))
-
+            stress_ani = np.zeros(6)
+    
+            if self.Setup or self.nc.request_setup():
+                # Setup molecule for MD
+                natoms = len(self.atoms)
+                atom_symbols = self.atoms.get_chemical_symbols()
+                xyz = self.atoms.get_positions()
+                self.nc.setMolecule(coords=xyz.astype(np.float32), types=atom_symbols)
+                self.nc.setPBC(self.atoms.get_pbc()[0], self.atoms.get_pbc()[1], self.atoms.get_pbc()[2])
+    
+                self.Setup = False
+            else:
+                xyz = self.atoms.get_positions()
+                # Set the conformers in NeuroChem
+                self.nc.setCoordinates(coords=xyz.astype(np.float32))
+    
+                # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
+                pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros((3, 3),
+                                                                                                                     dtype=np.float32)
+                self.nc.setCell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
+                # self.nc.setCell((self.atoms.get_cell()).astype(np.float32),(np.linalg.inv(self.atoms.get_cell())).astype(np.float32))
+    
+            # start_time2 = time.time()
+            self.results['energy'] = conv_au_ev * self.nc.energy()[0] + energy_d3
+            if 'forces' in properties:
+                forces = conv_au_ev * self.nc.force() + forces_d3.T
+    
+                # restrain atoms
+                for i in self.reslist:
+                    forces[i] = 0.0
+    
+                self.results['forces'] = forces
+            self.results['stress'] = conv_au_ev * stress_ani + stress_d3.flat[[0, 4, 8, 5, 2, 1]]
+            # end_time2 = time.time()
+            # print('ANI Time:', end_time2 - start_time2)
+    
+        def __update_neighbors(self):
+            # print('------------------------')
+            # szs = []
+            # an = self.atoms.get_atomic_numbers()
+            for a in range(0, len(self.atoms)):
+                indices, offsets = self.nlR.get_neighbors(a)
+                # if an[a] == 8:
+                # print(an[a])
+                # szs.append(len(indices))
+                self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float32))
+    
+                # indices, offsets = self.nlR.get_neighbors(302)
+                # f = open('test2.xyz','w')
+                # f.write(str(len(indices))+'\n')
+                # f.write("   comment\n")
+                # an = self.atoms.get_atomic_numbers()
+                # for i, offset in zip(indices, offsets):
+                #    xyz = self.atoms.positions[i]
+                #    f.write(str(an[i]) + ' ' + str(xyz[0]) + ' ' + str(xyz[1]) + ' ' + str(xyz[2]) + '\n')
+    
+                # print(szs)
+                # plt.hist(szs, max(szs)-min(szs), normed=1, facecolor='green', alpha=0.75)
+                # plt.xlabel('Number of neighbors')
+                # plt.ylabel('Count')
+                # plt.show()
+                # print('------------------------')
+    
+        def get_atomicenergies(self, atoms=None, properties=['energy'],
+                               system_changes=all_changes):
+            Calculator.calculate(self, atoms, properties, system_changes)
+    
+            ## make up for stress
+            ## TODO
+            stress_ani = np.zeros((1, 3))
+    
             if self.Setup or self.nc.request_setup():
                 # Setup molecule for MD
                 natoms = len(self.atoms)
@@ -361,10 +435,10 @@ if d3present:
                 xyz = self.atoms.get_positions()
                 # Set the conformers in NeuroChem
                 self.nc.setCoordinates(coords=xyz.astype(np.float32))
-
-            self.results['energy'] = conv_au_ev * self.nc.energy()[0] + energy_d3
-            self.results['forces'] = conv_au_ev * self.nc.force() + forces_d3.T
-            self.results['stress'] = conv_au_ev * stress_ani + stress_d3.flat[[0, 4, 8, 5, 2, 1]]
+    
+            self.nc.energy()
+    
+            return self.nc.aenergies(True) * conv_au_ev
 
 
 class D3(Calculator):
