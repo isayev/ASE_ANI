@@ -2,7 +2,7 @@ __author__ = 'jujuman'
 
 # Import pyNeuroChem
 import sys
-from ase_interface import ANI,ANID3,D3
+from ase_interface import ANI
 
 import numpy as np
 import  ase
