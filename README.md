@@ -1,6 +1,6 @@
 # ASE-ANI
 
-### NOTICE: Python binaries built for python 3.5 and CUDA 8
+### NOTICE: Python binaries built for python 3.6+ and CUDA 9 (for CUDA 8 binaries go to the CUDA8 branch)
 ### Works only under Ubuntu variants of Linux 
 
 This is a prototype interface for ANI-1 neural net potential for The Atomic Simulation Environment (ASE). Current ANI-1.1 potential implements CHNO elements and experimental support for S and F.
