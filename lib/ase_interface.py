@@ -186,7 +186,7 @@ class ensemblemolecule(object):
         for i, nc in enumerate(self.ncl):
             self.E[i] = nc.energy().copy()
             self.F[i] = nc.force().copy()
-        return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / float(self.Na)
+        return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na))
 
 ##-------------------------------------
 ## ANI Ensemble ASE interface
