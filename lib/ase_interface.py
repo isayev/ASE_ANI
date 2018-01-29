@@ -1,6 +1,7 @@
 import numpy as np
 import os, sys
 from math import sqrt
+import math
 import time
 
 from ase.units import Bohr
@@ -86,7 +87,7 @@ class ANI(Calculator):
             for i in self.reslist:
                 forces[i] = 0.0
 
-            self.results['forces'] = -forces
+            self.results['forces'] = forces
         self.results['stress'] = conv_au_ev*stress_ani
         #end_time2 = time.time()
         #print('ANI Time:', end_time2 - start_time2)
@@ -179,7 +180,7 @@ class ensemblemolecule(object):
         for i, nc in enumerate(self.ncl):
             nc.setCoordinates(coords=X)
             self.E[i] = nc.energy()[0]
-        sigma = np.std(self.E, axis=0) / float(self.Na)
+        sigma = np.std(self.E, axis=0) / np.sqrt(float(self.Na))
         return sigma
 
     def compute_mean_props(self):
@@ -187,6 +188,95 @@ class ensemblemolecule(object):
             self.E[i] = nc.energy().copy()
             self.F[i] = nc.force().copy()
         return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na))
+
+def hard_restrain_tortion_force(dhl, pos, frc):
+    frc_c = frc.copy()
+
+    # atoms on axis of rotation
+    b = pos[dhl[1]]
+    c = pos[dhl[2]]
+
+    # bond along axis of rotation
+    BC = c - b
+
+
+    # Get all points above and below BC plane
+    a = pos[dhl[0]]
+    d = pos[dhl[3]]
+
+    # Compute vectors AB, BC, DC
+    BA = a - b
+    CD = d - c
+
+    # Compute normal tangent vectors ABC, DCB
+    p1 = np.cross(BA,  BC)
+    p2 = np.cross(CD, -BC)
+
+    p1 = p1 / np.linalg.norm(p1)
+    p2 = p2 / np.linalg.norm(p2)
+
+    Fa = frc[dhl[0]]
+    Fb = frc[dhl[1]]
+    Fc = frc[dhl[2]]
+    Fd = frc[dhl[3]]
+
+    # Compute force components in direction of tangent vectors for A and D
+    Fan = p1 * np.dot(p1, Fa)
+    Fdn = p2 * np.dot(p2, Fd)
+
+    dFa = np.linalg.norm(Fan)
+    dFd = np.linalg.norm(Fdn)
+    Ft = dFa + dFd
+
+    Fan = 0.5*Ft*(Fan/dFa)
+    Fdn = 0.5*Ft*(Fdn/dFd)
+
+    #lo = dFd/Ft
+
+    # center of axis of rotation
+    o = b + 0.5*BC
+    OC = c - o
+
+    tc = -(np.cross(OC,Fdn) + 0.5*np.cross(CD, Fdn) + 0.5*np.cross(BA, Fan))
+    Fcn = (1.0/np.power(np.linalg.norm(OC),2))*np.cross(tc,OC)
+
+    #print('1) ',np.cross(OC, Fcn),tc,np.cross(OC, Fcn)-tc)
+
+    Fbn = -Fan-Fcn-Fdn
+
+    #if np.linalg.norm(Fcn) > 1.0e-40:
+    #	Fcn = Fcn / np.linalg.norm(Fcn)
+    #else:
+    #    Fcn = Fcn*0.0
+
+    #if np.linalg.norm(Fbn) > 1.0e-40:
+    #	Fbn = Fbn / np.linalg.norm(Fbn)
+    #else:
+    #	Fbn = Fbn*0.0
+
+    #Fcn = Fcn * np.dot(Fcn, Fc)
+    #Fbn = Fbn * np.dot(Fbn, Fb)
+    
+    #print(tfrcA,tfrcD)
+    #print(np.linalg.norm(tfrcA),np.linalg.norm(tfrcD))
+    #print(np.linalg.norm(Fan),np.linalg.norm(Fbn),np.linalg.norm(Fcn),np.linalg.norm(Fdn))
+
+    # Remove tangent force components from A and D
+    #print('2) ',Fan+Fbn+Fcn+Fdn,np.cross(a-o,Fan)+np.cross(b-o,Fbn)+np.cross(c-o,Fcn)+np.cross(d-o,Fdn))
+    #print(np.cross(a-o,Fan)+np.cross(d-o,Fdn),-np.cross(b-o,Fbn)-np.cross(c-o,Fcn))
+    #print('1) ',np.linalg.norm(Fan), np.linalg.norm(Fbn), np.linalg.norm(Fcn), np.linalg.norm(Fdn),)
+    #print(np.linalg.norm(Fan),np.linalg.norm(Fdn))
+    frc_c[dhl[0]] = frc[dhl[0]] - Fan
+    frc_c[dhl[1]] = frc[dhl[1]] - Fbn
+    frc_c[dhl[2]] = frc[dhl[2]] - Fcn
+    frc_c[dhl[3]] = frc[dhl[3]] - Fdn
+    #print('2) ',np.linalg.norm(frc_c[dhl[0]]), np.linalg.norm(frc_c[dhl[1]]), np.linalg.norm(frc_c[dhl[2]]), np.linalg.norm(frc_c[dhl[3]]))
+
+    #print(frc_c[dhl[0]], frc_c[dhl[1]], frc_c[dhl[2]], frc_c[dhl[3]])
+    #print(frc_c[dhl[0]], frc_c[dhl[3]])
+
+    # Return new force
+    return frc_c
 
 ##-------------------------------------
 ## ANI Ensemble ASE interface
@@ -197,13 +287,18 @@ class ANIENS(Calculator):
 
     nolabel = True
 
-    def __init__(self, aniens, sdmax=0.0034691, reslist=[], **kwargs):
+    def __init__(self, aniens, sdmax=0.0034691, **kwargs):
         Calculator.__init__(self, **kwargs)
 
         self.nc = aniens
         self.sdmax = sdmax
         self.Setup = True
-        self.reslist = reslist
+
+        # Tortional Restraint List
+        self.tres = []
+
+    def set_hard_tortional_restraint(self, tres):
+        self.tres = tres
 
     def calculate(self, atoms=None, properties=['energy'],
                   system_changes=all_changes):
@@ -242,11 +337,11 @@ class ANIENS(Calculator):
         if 'forces' in properties:
             forces = conv_au_ev * force
 
-            # restrain atoms
-            for i in self.reslist:
-                forces[i] = 0.0
+            if len(self.tres) > 0:
+                for res in self.tres:
+                    forces = hard_restrain_tortion_force(res, xyz, forces)
 
-            self.results['forces'] = -forces
+            self.results['forces'] = forces
         self.results['stress'] = conv_au_ev * stress_ani
 
 
