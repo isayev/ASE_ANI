@@ -1,0 +1,56 @@
+!InputFile for Force Prediction Network
+sflparamsfile=../rHCNO-4.6A_16-3.1A_a4-8.params
+ntwkStoreDir=networks/
+atomEnergyFile=../sae_6-31gd.dat
+nmax=0! Maximum number of iterations (0 = inf)
+tolr=75! Tolerance - early stopping
+emult=0.5!Multiplier by eta after tol switch
+eta=0.001! Eta -- Learning rate
+tcrit=1.0E-5! Eta termination criterion
+tmax=0! Maximum time (0 = inf)
+tbtchsz=512
+vbtchsz=512
+gpuid=7
+ntwshr=0
+nkde=2
+force=0
+fmult=0.01
+cmult =0.001
+runtype=ANNP_CREATE_HDNN_AND_TRAIN!Create and train a HDN network
+network_setup {
+  inputsize=384;
+  layer [
+        nodes=160;
+        activation=5;
+        type=0;
+        maxnorm=1;
+        norm=3.0;
+	btchnorm=0;
+  ]
+  layer [
+        nodes=160;
+        activation=5;
+        type=0;
+        maxnorm=1;
+        norm=3.0;
+        btchnorm=0;
+  ]
+  layer [
+        nodes=64;
+        activation=5;
+        type=0;
+        maxnorm=1;
+        norm=3.0;
+        btchnorm=0;
+  ]
+  layer [
+        nodes=1;
+        activation=6;
+        type=0;
+  ]
+}
+adptlrn=OFF ! Adaptive learning (OFF,RMSPROP)
+decrate=0.9 !Decay rate of RMSPROP
+moment=ADAM! Turn on momentum or nesterov momentum (OFF,CNSTTEMP,TMANNEAL,REGULAR,NESTEROV)
+mu=0.99 ! Mu factor for momentum
+
