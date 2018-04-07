@@ -17,6 +17,9 @@ Clone this repository into desired folder and add environmental variables from `
 
 For use cases please refer to examples folder with several iPython notebooks
 
+## Cool stuff!
+<iframe width="1280" height="720" src="https://www.youtube.com/embed/37Ba9hxEnHI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
 ## Data
 https://github.com/isayev/ANI1_dataset
 
