@@ -17,10 +17,14 @@ Clone this repository into desired folder and add environmental variables from `
 
 For use cases please refer to examples folder with several iPython notebooks
 
-## Cool stuff!
+## Cool stuff
+### Teaser of the new ANI-2x (CHNOSFCl) potential in action! 
 <a href="https://www.youtube.com/watch?v=37Ba9hxEnHI" target="_blank"><img src="http://img.youtube.com/vi/37Ba9hxEnHI/0.jpg" 
 alt="MD simulation of Protein-ligand complex with deep learning potential ANI-1x" width="240" height="180" border="10" /></a>
 
+### ANI-1x running 5ns MD on a box of C_2 at high temperature.
+<a href="https://www.youtube.com/watch?v=DRVMH5u8EA0" target="_blank"><img src="http://img.youtube.com/vi/DRVMH5u8EA0/4.jpg" 
+alt="MD simulation of Protein-ligand complex with deep learning potential ANI-1x" width="240" height="180" border="10" /></a>
 
 ## Data
 https://github.com/isayev/ANI1_dataset
