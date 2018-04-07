@@ -18,7 +18,9 @@ Clone this repository into desired folder and add environmental variables from `
 For use cases please refer to examples folder with several iPython notebooks
 
 ## Cool stuff!
-<iframe width="1280" height="720" src="https://www.youtube.com/embed/37Ba9hxEnHI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<a href="https://www.youtube.com/watch?v=37Ba9hxEnHI" target="_blank"><img src="http://img.youtube.com/vi/37Ba9hxEnHI/0.jpg" 
+alt="MD simulation of Protein-ligand complex with deep learning potential ANI-1x" width="240" height="180" border="10" /></a>
+
 
 ## Data
 https://github.com/isayev/ANI1_dataset
