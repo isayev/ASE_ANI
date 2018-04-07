@@ -3,7 +3,7 @@
 ### NOTICE: Python binaries built for python 3.6 and CUDA 9
 ### Works only under Ubuntu variants of Linux 
 
-This is a prototype interface for ANI-1 neural net potential for The Atomic Simulation Environment (ASE). Current ANI-1.1 potential implements CHNO elements.
+This is a prototype interface for ANI-1x neural network potential for The Atomic Simulation Environment (ASE). Current ANI-1x potential implements CHNO elements.
 
 ##REQUIREMENTS:
 * Python 3.6 (we recommend [Anaconda](https://www.continuum.io/downloads) distribution)
@@ -26,10 +26,10 @@ alt="MD simulation of Protein-ligand complex with deep learning potential ANI-1x
 <a href="https://www.youtube.com/watch?v=DRVMH5u8EA0" target="_blank"><img src="http://img.youtube.com/vi/DRVMH5u8EA0/0.jpg" 
 alt="Nucleation of carbon nanoparticles from hot vapor simulation with ANI-1 deep learning potential" width="240" height="180" border="10" /></a>
 
-## Data
+## ANI-1 dataset
 https://github.com/isayev/ANI1_dataset
 
-## Benchmark
+## COMP6 benchmark
 https://github.com/isayev/COMP6
 
 ## Citation
