@@ -22,7 +22,7 @@ For use cases please refer to examples folder with several iPython notebooks
 <a href="https://www.youtube.com/watch?v=37Ba9hxEnHI" target="_blank"><img src="http://img.youtube.com/vi/37Ba9hxEnHI/0.jpg" 
 alt="MD simulation of Protein-ligand complex with deep learning potential ANI-1x" width="240" height="180" border="10" /></a>
 
-### ANI-1x running 5ns MD on a box of C_2 at high temperature.
+### ANI-1x running 5ns MD on a box of C<sub>2</sub> at high temperature.
 <a href="https://www.youtube.com/watch?v=DRVMH5u8EA0" target="_blank"><img src="http://img.youtube.com/vi/DRVMH5u8EA0/0.jpg" 
 alt="Nucleation of carbon nanoparticles from hot vapor simulation with ANI-1 deep learning potential" width="240" height="180" border="10" /></a>
 
