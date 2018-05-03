@@ -64,7 +64,7 @@ class ANI(Calculator):
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
             self.nc.setMolecule(coords=xyz.astype(np.float32),types=atom_symbols)
-            self.nc.setPBC(self.atoms.get_pbc()[0],self.atoms.get_pbc()[1],self.atoms.get_pbc()[2])
+            self.nc.setPBC(bool(self.atoms.get_pbc()[0]),bool(self.atoms.get_pbc()[1]),bool(self.atoms.get_pbc()[2]))
 
             self.Setup=False
         else:
