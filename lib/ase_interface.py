@@ -36,9 +36,9 @@ class ANI(Calculator):
 
         if build:
             anipath = os.path.dirname(__file__)
-            cnstfile = anipath + '/../ani-1x_dft_x8ens/rHCNO-5.2R_16-3.5A_a4-8.params'
-            saefile = anipath + '/../ani-1x_dft_x8ens/sae_linfit.dat'
-            nnfdir = anipath + '/../ani-1x_dft_x8ens/train0/networks/'
+            cnstfile = anipath + '/../ANI-c08f-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
+            saefile = anipath + '/../ANI-c08f-ntwk/sae_6-31gd.dat'
+            nnfdir = anipath + '/../ANI-c08f-ntwk/networks/'
             self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
 
         self.Setup=True
@@ -554,10 +554,11 @@ if d3present:
     
             if build:
                 anipath = os.path.dirname(__file__)
-                cnstfile = anipath + '/../ani-1x_dft_x8ens/rHCNO-5.2R_16-3.5A_a4-8.params'
-                saefile = anipath + '/../ani-1x_dft_x8ens/sae_linfit.dat'
-                nnfdir = anipath + '/../ani-1x_dft_x8ens/train0/networks/'
-                self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid) 
+                cnstfile = anipath + '/../ANI-c08f-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
+                saefile = anipath + '/../ANI-c08f-ntwk/sae_6-31gd.dat'
+                nnfdir = anipath + '/../ANI-c08f-ntwk/networks/'
+                self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
+    
             self.Setup = True
             self.reslist = reslist
     
