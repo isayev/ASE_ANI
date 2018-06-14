@@ -3,13 +3,13 @@
 
 
 
-### NOTICE: Python binaries built for python 3.6 and CUDA 9
+### NOTICE: Python binaries built for python 3.5 and CUDA 9.1
 ### Works only under Ubuntu variants of Linux 
 
 This is a prototype interface for ANI-1x neural network potential for The Atomic Simulation Environment (ASE). Current ANI-1x potential implements CHNO elements.
 
 ##REQUIREMENTS:
-* Python 2.7 (Should work with default Ubuntu 16.04 python 2.7)
+* Python 3.5 ((we recommend [Anaconda](https://www.continuum.io/downloads) distribution)
 * Modern NVIDIA GPU, [compute capability 5.0](https://developer.nvidia.com/cuda-gpus) of newer.
 * [CUDA 9.1](https://developer.nvidia.com/cuda-downloads)
 * [ASE](https://wiki.fysik.dtu.dk/ase/index.html)
