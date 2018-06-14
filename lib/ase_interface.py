@@ -1,7 +1,6 @@
 import numpy as np
 import os, sys
 from math import sqrt
-import math
 import time
 
 from ase.units import Bohr
@@ -36,9 +35,9 @@ class ANI(Calculator):
 
         if build:
             anipath = os.path.dirname(__file__)
-            cnstfile = anipath + '/../ANI-c08f-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
-            saefile = anipath + '/../ANI-c08f-ntwk/sae_6-31gd.dat'
-            nnfdir = anipath + '/../ANI-c08f-ntwk/networks/'
+            cnstfile = anipath + '/../ani-1x_dft_x8ens/rHCNO-5.2R_16-3.5A_a4-8.params'
+            saefile = anipath + '/../ani-1x_dft_x8ens/sae_linfit.dat'
+            nnfdir = anipath + '/../ani-1x_dft_x8ens/train0/networks/'
             self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
 
         self.Setup=True
@@ -144,17 +143,18 @@ class ANI(Calculator):
         return self.nc.aenergies(True) * conv_au_ev
 
 ##-------------------------------------
-## Class for ANI ensemble prediction
+## Class for ANI cross validaiton tools
 ##--------------------------------------
 class ensemblemolecule(object):
     def __init__(self, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
         # Number of networks
         self.Nn = Nnet
+
         # Construct pyNeuroChem molecule classes
         self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix + str(i) + '/networks/', gpuid, sinet) for i in
                     range(self.Nn)]
 
-    def set_molecule(self, X, S):
+    def set_molecule(self,X,S):
         for nc in self.ncl:
             nc.setMolecule(coords=X, types=list(S))
 
@@ -163,11 +163,11 @@ class ensemblemolecule(object):
 
         self.Na = X.shape[0]
 
-    def set_coordinates(self, X):
+    def set_coordinates(self,X):
         for nc in self.ncl:
             nc.setCoordinates(coords=X.astype(np.float32))
 
-    def set_pbc(self, pbc0, pbc1, pbc2):
+    def set_pbc(self,pbc0, pbc1, pbc2):
         for nc in self.ncl:
             nc.setPBC(pbc0, pbc1, pbc2)
 
@@ -179,150 +179,49 @@ class ensemblemolecule(object):
         for i, nc in enumerate(self.ncl):
             nc.setCoordinates(coords=X)
             self.E[i] = nc.energy()[0]
-        sigma = np.std(self.E, axis=0) / np.sqrt(float(self.Na))
+        sigma = np.std(self.E, axis=0) / float(self.Na)
         return sigma
 
     def compute_mean_props(self):
-        for i, nc in enumerate(self.ncl):
+        for i,nc in enumerate(self.ncl):
             self.E[i] = nc.energy().copy()
             self.F[i] = nc.force().copy()
-        return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na))
+        return np.mean(self.E,axis=0), np.mean(self.F,axis=0),  np.std(self.E, axis=0) / float(self.Na)
 
-    def compute_mean_energies(self):
-        for i, nc in enumerate(self.ncl):
-            self.E[i] = nc.energy().copy()
-        return np.mean(self.E, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na))
-
-
-##-------------------------------------
-##         Cos cutoff functions
-##--------------------------------------
-def coscut(Rmag, iRc, sRc):
-    return 0.5 * np.cos(math.pi * (Rmag+sRc) * iRc) + 0.5
-
-def dcoscut(Rmag, R, iRc, sRc):
-    return 0.5 * math.pi * iRc * np.sin(math.pi * iRc * (Rmag+sRc)) * R/Rmag
-
-##-------------------------------------
-##     ANI Ensemble ASE interface
-##--------------------------------------
 class ANIENS(Calculator):
-    implemented_properties = ['energy', 'forces', 'stress', 'dipole']
+    implemented_properties = ['energy', 'forces', 'stress']
+    # implemented_properties = ['energy', 'forces']
     default_parameters = {'xc': 'ani'}
 
     nolabel = True
 
-    ### Constructor ###
-    def __init__(self, aniens, sdmax=2000000.0, energy_conversion=conv_au_ev, **kwargs):
+    def __init__(self, aniens, sdmax=0.0034691, reslist=[], **kwargs):
         Calculator.__init__(self, **kwargs)
 
         self.nc = aniens
-        self.energy_conversion = energy_conversion
         self.sdmax = sdmax
         self.Setup = True
+        self.reslist = reslist
 
-        self.nc_time=0.0
-
-        self.Epwise = None
-        self.Emodel = None
-
-        self.pwiter = True
-        self.pairwise = False
-
-        self.hipmodels = None
-
-        # Tortional Restraint List
-        self.tres = []
-
-        self.Xn = np.zeros((0,0,3), dtype=np.float64)
-        self.Dn = np.zeros((0,0,3), dtype=np.float64)
-
-    ### Set the pairwise functions ###
-    def set_pairwise(self, Efunc, Ffunc):
-        self.Efunc = Efunc
-        self.Ffunc = Ffunc
-        self.pairwise = True
-
-    ### Set HIPNN for dipole ###
-    def set_hipnn_dipole_model(self, hipmodels):
-        self.hipmodels = hipmodels
-
-    def resize_XnDn(self,ne):
-        if ne > self.Xn.shape[1]:
-            self.Xn = np.pad(self.Xn,((0, 0), (0, ne - self.Xn.shape[1]), (0, 0)), 'constant', constant_values=((0, 0), (0, 0), (0, 0)))
-            self.Dn = np.pad(self.Dn,((0, 0), (0, ne - self.Dn.shape[1]), (0, 0)), 'constant', constant_values=((0, 0), (0, 0), (0, 0)))
-        return self.Xn.shape[1]
-
-    ### Adds the pairwise energies/forces to the calculated ###
-    def add_pairwise(self, properties):
-        positions = self.atoms.get_positions()
-
-        if self.pwiter:
-            N = positions.shape[0]
-            self.nl = NeighborList(np.full(N, 2.0), skin=0.25, self_interaction=False)
-            self.Xn = np.zeros((N, 0, 3), dtype=np.float64)
-            self.Dn = np.zeros((N, 0, 3), dtype=np.float64)
-            self.pwiter = False
-
-        #start_time = time.time()
-        self.nl.update(self.atoms)
-
-        Epairwise = 0.0
-        if 'forces' in properties:
-            Fpairwise = 0. * positions
-
-        # loop over all atoms in the cell
-        for ia, posa in enumerate(positions):
-            indices, offsets = self.nl.get_neighbors(ia)
-            #print('Neh/Dsp:', indices.shape, offsets.shape)
-
-            #nposition = positions[indices]
-            R = positions[indices] + np.dot(offsets, self.atoms.get_cell()) - posa[np.newaxis,:]
-            Rmag = np.linalg.norm(R,axis=1)
-            cidx = np.where( (Rmag >= 3.0) & (Rmag < 4.0)  )
-            sidx = np.where(Rmag >= 4.0)
-            E = self.Efunc(Rmag)
-
-            Ecut = coscut(Rmag[cidx], 1.0/1.0, 3.0)
-            E[cidx] = E[cidx]*Ecut
-            E[sidx] = 0.0*E[sidx]
-
-            Epairwise += E.sum() # Neighbors list supplies only neighbors once (NO DOUBLE COUNT)
-
-            if 'forces' in properties:
-                F = self.Ffunc(Rmag[:,np.newaxis],R)
-                F[cidx] = (E[cidx][:,np.newaxis]*dcoscut(Rmag[cidx][:,np.newaxis], R[cidx], 1.0/1.0, 3.0)+Ecut[:,np.newaxis]*F[cidx])
-                F[sidx] = 0.0 * F[sidx]
-                Fpairwise[indices] += -F
-                Fpairwise[ia] += np.sum(F,axis=0)
-
-        self.results['energy'] += Epairwise
-        self.Epwise = Epairwise
-        if 'forces' in properties:
-            #print(Fpairwise.shape,np.sum(Fpairwise, axis=1))
-            self.results['forces'] += Fpairwise
-
-    ### Calculate function require by ASE ###
     def calculate(self, atoms=None, properties=['energy'],
                   system_changes=all_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
+        # start_time2 = time.time()
         ## make up for stress
         ## TODO
         # stress_ani = np.zeros((1, 3))
         stress_ani = np.zeros(6)
 
-        ## Check if models are initilized (first step)
         if self.Setup or self.nc.ncl[0].request_setup():
             # Setup molecule for MD
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
             self.nc.set_molecule(xyz.astype(np.float32), atom_symbols)
-            self.nc.set_pbc(bool(self.atoms.get_pbc()[0]), bool(self.atoms.get_pbc()[1]), bool(self.atoms.get_pbc()[2]))
+            self.nc.set_pbc(self.atoms.get_pbc()[0], self.atoms.get_pbc()[1], self.atoms.get_pbc()[2])
 
             self.Setup = False
-        ## Run this if models are initialized
         else:
             xyz = self.atoms.get_positions()
             # Set the conformers in NeuroChem
@@ -332,62 +231,56 @@ class ANIENS(Calculator):
             pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros(
                 (3, 3), dtype=np.float32)
             self.nc.set_cell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
+            # self.nc.setCell((self.atoms.get_cell()).astype(np.float32),(np.linalg.inv(self.atoms.get_cell())).astype(np.float32))
 
-        ## Compute the model properties (you can speed up ASE energy prediction by not doing force backprop unless needed.)
-        start_time = time.time()
+        # start_time2 = time.time()
         energy, force, stddev = self.nc.compute_mean_props()
-        self.nc_time+=time.time() - start_time
 
-        ## convert std dev to correct units
-        self.stddev = self.energy_conversion * stddev
+        self.stddev = conv_au_ev * stddev
 
-        ## Store energies in ASE
-        self.results['energy'] = energy
-        self.Emodel = energy
+        #if self.stddev > self.sdmax:
+            #print('!!! WARNING: Ensemble Standard Deviation per atom is high:',self.stddev)
 
-        ## If forces are requested store forces 
+        self.results['energy'] = conv_au_ev * energy
         if 'forces' in properties:
-            forces = force
+            forces = conv_au_ev * force
 
-            if len(self.tres) > 0:
-                for res in self.tres:
-                    forces = hard_restrain_tortion_force(res, xyz, forces)
+            # restrain atoms
+            for i in self.reslist:
+                forces[i] = 0.0
 
-            self.results['forces'] = forces
+            self.results['forces'] = -forces
+        self.results['stress'] = conv_au_ev * stress_ani
+        # end_time2 = time.time()
+        # print('ANI Time:', end_time2 - start_time2)
 
-        ## Set stress tensor
-        self.results['stress'] = self.energy_conversion * stress_ani
-
-        ## If the HIP-NN model is set run this for dipoles
-        if self.hipmodels is not None:
-            Z = self.atoms.get_atomic_numbers()
-            R = self.atoms.get_positions()
-
-            R = R.reshape([1,len(Z),3])
-            Z = Z.reshape([1, len(Z)]).astype(np.int32)
-
-            dipole = np.zeros((3),dtype=np.float32)
-            for hippy in self.hipmodels:
-                output = hippy.pred_fn([Z, R], shape_output=True)
-                dipole += output[1][0][0]
-            self.results['dipole'] = dipole/len(self.hipmodels)
-
-        ## Compute pairwise if requested
-        if self.pairwise:
-            self.add_pairwise(properties)
-        
-        ## Convert energies and forces to requested units
-        self.results['energy'] = self.energy_conversion * self.results['energy']
-        if 'forces' in properties:
-            self.results['forces'] = self.energy_conversion * self.results['forces']
-
-    ### NL Update function now handled internally ###
     def __update_neighbors(self):
+        # print('------------------------')
+        # szs = []
+        # an = self.atoms.get_atomic_numbers()
         for a in range(0, len(self.atoms)):
             indices, offsets = self.nlR.get_neighbors(a)
+            # if an[a] == 8:
+            # print(an[a])
+            # szs.append(len(indices))
             self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float32))
 
-    ### Return the atomic energies (in eV) ###
+            # indices, offsets = self.nlR.get_neighbors(302)
+            # f = open('test2.xyz','w')
+            # f.write(str(len(indices))+'\n')
+            # f.write("   comment\n")
+            # an = self.atoms.get_atomic_numbers()
+            # for i, offset in zip(indices, offsets):
+            #    xyz = self.atoms.positions[i]
+            #    f.write(str(an[i]) + ' ' + str(xyz[0]) + ' ' + str(xyz[1]) + ' ' + str(xyz[2]) + '\n')
+
+            # print(szs)
+            # plt.hist(szs, max(szs)-min(szs), normed=1, facecolor='green', alpha=0.75)
+            # plt.xlabel('Number of neighbors')
+            # plt.ylabel('Count')
+            # plt.show()
+            # print('------------------------')
+
     def get_atomicenergies(self, atoms=None, properties=['energy'],
                            system_changes=all_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -531,10 +424,8 @@ if d3present:
 
 
     # Class of ANI + D3 energies
-    
     class ANID3(Calculator):
         implemented_properties = ['energy', 'forces', 'stress']
-    
         default_parameters = {'xc': 'ani',
                               'bj': True,
                               'threebody': True,
@@ -545,51 +436,48 @@ if d3present:
                               'rs18': None,
                               's6': None,
                               'calculator': None}
-    
-    
+
         nolabel = True
-    
-        def __init__(self, build=True, gpuid=0, reslist=[], **kwargs):
+
+        def __init__(self, build=True, **kwargs):
             Calculator.__init__(self, **kwargs)
-    
             if build:
                 anipath = os.path.dirname(__file__)
-                cnstfile = anipath + '/../ANI-c08f-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
-                saefile = anipath + '/../ANI-c08f-ntwk/sae_6-31gd.dat'
-                nnfdir = anipath + '/../ANI-c08f-ntwk/networks/'
-                self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
-    
+                cnstfile = anipath + '/../ani-1x_dft_x8ens/rHCNO-5.2R_16-3.5A_a4-8.params'
+                saefile = anipath + '/../ani-1x_dft_x8ens/sae_linfit.dat'
+                nnfdir = anipath + '/../ani-1x_dft_x8ens/train0/networks/'
+                self.nc = pync.molecule(cnstfile, saefile, nnfdir, 0)
+
             self.Setup = True
-            self.reslist = reslist
-    
-        def setnc(self, nc):
-            self.nc = nc
-    
+
+            def setnc(self, nc):
+                self.nc = nc
+
         def calculate(self, atoms=None, properties=['energy'],
                       system_changes=all_changes):
             Calculator.calculate(self, atoms, properties, system_changes)
-    
+
             xc = self.parameters.xc.lower()
             bj = self.parameters.bj
             threebody = self.parameters.threebody
             rcut = self.parameters.rcut
             rcutcn = self.parameters.rcutcn
             calculator = self.parameters.calculator
-    
+
             if bj:
                 damp = dampbj
             else:
                 damp = damp0
-    
+
             rs6 = s18 = rs18 = s6 = None
-    
+
             try:
                 rs6, s18, rs18, s6 = damp[xc]
             except KeyError:
                 unknown_functional = True
             else:
                 unknown_functional = False
-    
+
             if self.parameters.s6 is not None:
                 s6 = self.parameters.s6
             if self.parameters.s18 is not None:
@@ -598,11 +486,11 @@ if d3present:
                 rs6 = self.parameters.rs6
             if self.parameters.rs18 is not None:
                 rs18 = self.parameters.rs18
-    
+
             if unknown_functional and None in (s6, s18, rs6, rs18):
                 raise ValueError("Unknown functional {}! \
                         Please specify damping parameters.".format(xc))
-    
+
             # D3 calculation part
             energy_d3, forces_d3, stress_d3 = d3_calc(
                 self.atoms.get_atomic_numbers(),
@@ -619,95 +507,26 @@ if d3present:
                 pbc=self.atoms.get_pbc(),
                 bj=bj,
                 threebody=threebody)
-    
+
             ## make up for stress
             ## TODO
-            stress_ani = np.zeros(6)
-    
+            stress_ani = 0#np.zeros((1, 3))
+
             if self.Setup or self.nc.request_setup():
                 # Setup molecule for MD
                 natoms = len(self.atoms)
                 atom_symbols = self.atoms.get_chemical_symbols()
                 xyz = self.atoms.get_positions()
                 self.nc.setMolecule(coords=xyz.astype(np.float32), types=atom_symbols)
-                self.nc.setPBC(self.atoms.get_pbc()[0], self.atoms.get_pbc()[1], self.atoms.get_pbc()[2])
-    
                 self.Setup = False
             else:
                 xyz = self.atoms.get_positions()
                 # Set the conformers in NeuroChem
                 self.nc.setCoordinates(coords=xyz.astype(np.float32))
-    
-                # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
-                pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros((3, 3),
-                                                                                                                     dtype=np.float32)
-                self.nc.setCell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
-                # self.nc.setCell((self.atoms.get_cell()).astype(np.float32),(np.linalg.inv(self.atoms.get_cell())).astype(np.float32))
-    
-            # start_time2 = time.time()
+
             self.results['energy'] = conv_au_ev * self.nc.energy()[0] + energy_d3
-            if 'forces' in properties:
-                forces = -conv_au_ev * self.nc.force() + forces_d3.T
-    
-                # restrain atoms
-                for i in self.reslist:
-                    forces[i] = 0.0
-    
-                self.results['forces'] = forces
+            self.results['forces'] = conv_au_ev * self.nc.force() + forces_d3.T
             self.results['stress'] = conv_au_ev * stress_ani + stress_d3.flat[[0, 4, 8, 5, 2, 1]]
-            # end_time2 = time.time()
-            # print('ANI Time:', end_time2 - start_time2)
-    
-        def __update_neighbors(self):
-            # print('------------------------')
-            # szs = []
-            # an = self.atoms.get_atomic_numbers()
-            for a in range(0, len(self.atoms)):
-                indices, offsets = self.nlR.get_neighbors(a)
-                # if an[a] == 8:
-                # print(an[a])
-                # szs.append(len(indices))
-                self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float32))
-    
-                # indices, offsets = self.nlR.get_neighbors(302)
-                # f = open('test2.xyz','w')
-                # f.write(str(len(indices))+'\n')
-                # f.write("   comment\n")
-                # an = self.atoms.get_atomic_numbers()
-                # for i, offset in zip(indices, offsets):
-                #    xyz = self.atoms.positions[i]
-                #    f.write(str(an[i]) + ' ' + str(xyz[0]) + ' ' + str(xyz[1]) + ' ' + str(xyz[2]) + '\n')
-    
-                # print(szs)
-                # plt.hist(szs, max(szs)-min(szs), normed=1, facecolor='green', alpha=0.75)
-                # plt.xlabel('Number of neighbors')
-                # plt.ylabel('Count')
-                # plt.show()
-                # print('------------------------')
-    
-        def get_atomicenergies(self, atoms=None, properties=['energy'],
-                               system_changes=all_changes):
-            Calculator.calculate(self, atoms, properties, system_changes)
-    
-            ## make up for stress
-            ## TODO
-            stress_ani = np.zeros((1, 3))
-    
-            if self.Setup or self.nc.request_setup():
-                # Setup molecule for MD
-                natoms = len(self.atoms)
-                atom_symbols = self.atoms.get_chemical_symbols()
-                xyz = self.atoms.get_positions()
-                self.nc.setMolecule(coords=xyz.astype(np.float32), types=atom_symbols)
-                self.Setup = False
-            else:
-                xyz = self.atoms.get_positions()
-                # Set the conformers in NeuroChem
-                self.nc.setCoordinates(coords=xyz.astype(np.float32))
-    
-            self.nc.energy()
-    
-            return self.nc.aenergies(True) * conv_au_ev
 
 
 class D3(Calculator):
