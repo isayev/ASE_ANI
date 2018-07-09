@@ -18,7 +18,7 @@ Clone this repository into desired folder and add environmental variables from `
 
 To test the code run the python script: examples/ani_quicktest.py<br/>
 
-Computed energies on a working installation are (eV):<br/>
+Computed energies from the quick test on a working installation are (eV):<br/>
 Initial Energy:  -2078.502822821320 <br/>
 Final   Energy:  -2078.504266011399 <br/>
 
