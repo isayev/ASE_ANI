@@ -1,52 +1,39 @@
 __author__ = 'jujuman'
 
-# Import pyNeuroChem
+# Import ANI ensemble loader
 import sys
-from ase_interface import ANI
+#sys.path.append('/home/olexandr/notebooks/ASE_ANI/lib')
+from ase_interface import ANIENS
+from ase_interface import aniensloader
 
-import numpy as np
 import  ase
 import time
 from ase import units
 from ase.io import read, write
 from ase.optimize import BFGS, LBFGS
 
-import pyNeuroChem as pync
+# Read molecule from xyz
+mol = read('data/water.xyz')
 
-# Set required files for pyNeuroChem
-#anipath  = '/home/jujuman/Dropbox/ChemSciencePaper.AER/ANI-c08e-ntwk'
-#cnstfile = anipath + '/rHCNO-4.6A_16-3.1A_a4-8.params'
-#saefile  = anipath + '/sae_6-31gd.dat'
-#nnfdir   = anipath + '/networks/'
+# Current ANI model options are:
+# '../ani_models/ani-1ccx_8x.info' Coupled cluster transfer learned model
+# '../ani_models/ani-1x_8x.info'   Full ANI-1x wb97x/6-31g* dataset model
+mol.set_calculator(ANIENS(aniensloader('../ani_models/ani-1ccx_8x.info',[0])))
 
-# Construct pyNeuroChem class
-#nc = pync.molecule(cnstfile, saefile, nnfdir, 0)
-
-mol = read('examples/data/water.xyz')
-
-mol.set_calculator(ANI())
-#mol.calc.setnc(nc)
-
+# Calculate energy
 ei = mol.get_potential_energy()
 print("Initial Energy: ",ei)
 
-foo = mol.calc.get_atomicenergies()
-#foo = nc.aenergies()
-print(foo.sum())
-
-# O of Conformations
+# Optimize molecule
 print("Optimizing...")
 start_time = time.time()
 dyn = LBFGS(mol)
-dyn.run(fmax=0.00001)
+dyn.run(fmax=0.001)
 print('[ANI Optimization - Total time:', time.time() - start_time, 'seconds]')
 
+# Calculate energy
 ef = mol.get_potential_energy()
 print("Final Energy: ",ef)
 
-# Write visualization of molecule
-#f = open("optmol.xyz",'w')
-#f.write('\n' + str(len(mol)) + '\n')
-#for i in mol:
-#    f.write(str(i.symbol) + ' ' + str(i.x) + ' ' + str(i.y) + ' ' + str(i.z) + '\n')
-#f.close()
+# Cleanup the calculator class
+mol.calc.nc.cleanup()

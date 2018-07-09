@@ -4,6 +4,8 @@ from math import sqrt
 import math
 import time
 
+import types
+
 from ase.units import Bohr
 from ase.calculators.calculator import Calculator, all_changes
 from ase.neighborlist import NeighborList
@@ -16,6 +18,9 @@ except ImportError:
     pass
 
 import pyNeuroChem as pync
+
+import multiprocessing
+from multiprocessing import Process, Value, Array, Queue
 
 # ANI energy a.u. to eV conversion
 global conv_au_ev
@@ -36,9 +41,9 @@ class ANI(Calculator):
 
         if build:
             anipath = os.path.dirname(__file__)
-            cnstfile = anipath + '/../ANI-c08f-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
-            saefile = anipath + '/../ANI-c08f-ntwk/sae_6-31gd.dat'
-            nnfdir = anipath + '/../ANI-c08f-ntwk/networks/'
+            cnstfile = anipath + '/../ani-1x_dft_x8ens/rHCNO-5.2R_16-3.5A_a4-8.params'
+            saefile = anipath + '/../ani-1x_dft_x8ens/sae_linfit.dat'
+            nnfdir = anipath + '/../ani-1x_dft_x8ens/train0/networks/'
             self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
 
         self.Setup=True
@@ -64,7 +69,7 @@ class ANI(Calculator):
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
             self.nc.setMolecule(coords=xyz.astype(np.float32),types=atom_symbols)
-            self.nc.setPBC(bool(self.atoms.get_pbc()[0]),bool(self.atoms.get_pbc()[1]),bool(self.atoms.get_pbc()[2]))
+            self.nc.setPBC(self.atoms.get_pbc()[0],self.atoms.get_pbc()[1],self.atoms.get_pbc()[2])
 
             self.Setup=False
         else:
@@ -144,10 +149,268 @@ class ANI(Calculator):
         return self.nc.aenergies(True) * conv_au_ev
 
 ##-------------------------------------
+##      Molecule worker class
+##--------------------------------------
+def molecule_worker(task_queue, gpuid, net_list, energy, forces, net_dict):
+    print('Building...')
+    ncl = [pync.molecule(net_dict['cns'], net_dict['sae'], net_dict['nnf'] + str(i) + '/networks/', gpuid, False) for i
+           in net_list]
+
+    Nn = net_dict['Nn']
+
+    if net_dict['epw']:
+        for nc in ncl:
+            nc.setPairWise()
+
+    set_pbc = False
+
+    Sp = []
+
+    while True:
+        next_task = task_queue.get()
+        if next_task is None:
+            # Poison pill means shutdown
+            time.sleep(1)
+            print ('Exiting')
+            task_queue.task_done()
+            break
+
+        if not set_pbc:
+            pbc = next_task['pbc']
+            for i, netid in enumerate(net_list):
+                #print('PBC:',pbc)
+                ncl[i].setPBC(pbc[0], pbc[1], pbc[2])
+            set_pbc=True
+
+        # Atomic elements
+        S = next_task['S']
+
+        # Cell
+        cell = next_task['cell']
+
+        # pbc_inv
+        pinv = next_task['pinv']
+
+        # make it two-dimensional
+        for i, netid in enumerate(net_list):
+            # Set the molecule/coordinates
+
+            if Sp == S:
+                if 'bynet' in next_task:
+                    ncl[i].setCoordinates(coords=next_task['X'][netid].astype(np.float32))
+                else:
+                    ncl[i].setCoordinates(coords=next_task['X'].astype(np.float32))
+            else:
+                if 'bynet' in next_task:
+                    ncl[i].setMolecule(next_task['X'][netid].astype(np.float32), S)
+                else:
+                    ncl[i].setMolecule(next_task['X'].astype(np.float32), S)
+
+            # Set the cell
+            ncl[i].setCell(cell, pinv)
+            #print('CELL:',cell)
+
+            energy[netid] = ncl[i].energy().copy()
+            forces[netid] = ncl[i].force().copy()
+            #if netid == 0 and net_dict['epw']:
+                #energy[netid] += ncl[i].pwenergy()
+                #forces[netid] += ncl[i].pwforce()
+                #print(ncl[i].pwenergy().copy())
+                #print(-ncl[i].pwforce().copy()[0])
+
+            if net_dict['epw']:
+                energy[netid] +=  ncl[i].pwenergy()
+                forces[netid] +=  ncl[i].pwforce()
+        Sp = S
+
+        task_queue.task_done()
+    return
+
+##-------------------------------------
+## Class for ANI ensemble prediction
+##--------------------------------------
+class ensemblemolecule_multigpu(object):
+    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, gpu_list=0, sinet=False, forcesigma=False, enablepairwise=False):
+        # Number of networks
+        self.Nn = Nnet
+
+        if not isinstance(gpu_list, list):
+            gpu_list = [gpu_list]
+
+        # Build network dict
+        self.netdict = {'cns': cnstfile,
+                        'sae': saefile,
+                        'nnf': nnfprefix,
+                        'Nn' : self.Nn, 
+                        'epw': enablepairwise}
+
+        # number of cores
+        self.cores = len(gpu_list)
+
+        # Build task list
+        self.task_list = [multiprocessing.JoinableQueue() for i in range(self.cores)]
+
+        # Construct working containers
+        self.energy = Array('d', range(self.Nn))
+
+        # Construct working containers
+        self.manager = multiprocessing.Manager()
+
+        self.forces = self.manager.list()
+        self.forces[:] = [[] for i in range(self.Nn)]
+
+        # Construct threads with pyNeuroChem molecule classes
+        self.p_list = []
+        for i in range(self.cores):
+            self.net_list = [j + int(self.Nn / self.cores) * i for j in range(int(self.Nn / self.cores))]
+            self.p_list.append(
+                Process(target=molecule_worker, args=(self.task_list[i], gpu_list[i], self.net_list, self.energy, self.forces, self.netdict)))
+            self.p_list[-1].start()
+
+    def request_setup(self):
+        return False
+
+    def set_molecule(self, X, S):
+        self.S = S
+        self.set_coordinates(X)
+        self.Na = len(S)
+
+    def set_coordinates(self, X):
+        self.X = X
+
+    def set_pbc(self, pbc0, pbc1, pbc2):
+        self.pbc = [pbc0, pbc1, pbc2]
+
+    def set_cell(self, cell, pbc_inv):
+        self.cell = cell
+        self.pinv = pbc_inv
+
+    def compute_props(self):
+        data_dict = {'X': self.X,
+                     'S': self.S,
+                     'pbc' : self.pbc,
+                     'cell' : self.cell,
+                     'pinv' : self.pinv}
+
+        self.forces[:] = [[] for i in range(self.Nn)]
+
+        # Launch Jobs
+        for i in range(self.cores):
+            self.task_list[i].put(data_dict)
+
+        # Wait for jobs
+        for i in range(self.cores):
+            self.task_list[i].join()
+
+        self.E = np.array(self.energy[:])
+        self.F = np.stack(self.forces[:])
+        return self.E, self.F
+
+    def compute_props_by_net(self, X, S):
+        data_dict = {'X': X,
+                     'S': S,
+                     'pbc' : self.pbc,
+                     'cell' : self.cell,
+                     'pinv' : self.pinv,
+                     'bynet': True}
+
+        self.forces[:] = [[] for i in range(self.Nn)]
+
+        # Launch Jobs
+        for i in range(self.cores):
+            self.task_list[i].put(data_dict)
+
+        # Wait for jobs
+        for i in range(self.cores):
+            self.task_list[i].join()
+
+        self.E = np.array(self.energy[:])
+        self.F = np.stack(self.forces[:])
+        return self.E, self.F
+
+    def compute_mean_props(self):
+        data_dict = {'X': self.X,
+                     'S': self.S,
+                     'pbc' : self.pbc,
+                     'cell' : self.cell,
+                     'pinv' : self.pinv}
+
+        self.forces[:] = [[] for i in range(self.Nn)]
+
+        # Launch Jobs
+        for i in range(self.cores):
+            self.task_list[i].put(data_dict)
+
+        # Wait for jobs
+        for i in range(self.cores):
+            self.task_list[i].join()
+
+        self.E = np.array(self.energy[:])
+        self.F = np.stack(self.forces[:])
+
+        # dF and C
+        dF = self.F - np.mean(self.F, axis=0)[np.newaxis, :, :]
+
+        # Compute var sqr
+        v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
+
+        # Store intermediates 
+        self.intermediates = {'var_sqr': v2}
+
+        return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(self.F, axis=0))
+
+    def compute_sigma_bias_potential(self, X, S, Efunc, Ffunc, epsilon=0.001, disable_ani=False):
+        if self.Nn < 2:
+            print('Error: compute_sigma_bias_potential requires more than 1 network in the ensemble.')
+            raise ValueError
+
+        # Initial Force
+        self.set_molecule(X, S)
+        E, F = self.compute_props()
+
+        # dF and C
+        dF = F - np.mean(F, axis=0)[np.newaxis, :, :]
+
+        # Forward calc
+        E1, F1 = self.compute_props_by_net(X[np.newaxis, :, :] + epsilon * dF, S)
+
+        # Backward calc
+        E2, F2 = self.compute_props_by_net(X[np.newaxis, :, :] - epsilon * dF, S)
+
+        # Computer ds/dx via central difference
+        ds = np.sum((F1 - F2) / epsilon, axis=0) / (self.Nn * (self.Nn - 1))
+
+        # Compute var sqr
+        v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
+
+        E_bias = Efunc(v2)
+        F_bias = Ffunc(v2, ds)
+
+        Eani = np.mean(E, axis=0)
+        Fani = np.mean(F, axis=0)
+        self.intermediates = {'Ebias': E_bias,'Eani': Eani,'Fbias': F_bias,'Fani': Fani,'var_sqr': v2}
+
+        if not disable_ani:
+            return E_bias+Eani, F_bias+Fani, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(F, axis=0))
+        else:
+            return E_bias, F_bias, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(F, axis=0))
+
+    def cleanup(self):
+        # Add a poison pill for each consumer
+        for task, in zip(self.task_list):
+            task.put(None)
+
+        #for proc in zip(self.p_list):
+        #    proc.join()
+
+    def __del__(self):
+        self.cleanup()
+
+##-------------------------------------
 ## Class for ANI ensemble prediction
 ##--------------------------------------
 class ensemblemolecule(object):
-    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False):
+    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False, forcesigma=False):
         # Number of networks
         self.Nn = Nnet
 
@@ -155,14 +418,27 @@ class ensemblemolecule(object):
         self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix + str(i) + '/networks/', gpuid, sinet) for i in
                     range(self.Nn)]
 
+
     def set_molecule(self, X, S):
         for nc in self.ncl:
-            nc.setMolecule(coords=X, types=list(S))
+            nc.setMolecule(coords=np.array(X,dtype=np.float32), types=list(S))
 
         self.E = np.zeros((self.Nn), dtype=np.float64)
         self.F = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
 
         self.Na = X.shape[0]
+
+    def set_molecule_per_net(self, X, S):
+        for nc,x in zip(self.ncl,X):
+            nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
+
+        self.E = np.zeros((self.Nn), dtype=np.float64)
+        self.F = np.zeros((self.Nn, X.shape[1], X.shape[2]), dtype=np.float32)
+
+        self.Na = X.shape[0]
+
+    def request_setup(self):
+        return self.ncl[0].request_setup()
 
     def set_coordinates(self, X):
         for nc in self.ncl:
@@ -183,175 +459,313 @@ class ensemblemolecule(object):
         sigma = np.std(self.E, axis=0) / np.sqrt(float(self.Na))
         return sigma
 
+    def compute_props(self):
+        for i, nc in enumerate(self.ncl):
+            self.E[i] = nc.energy().copy()
+            self.F[i] = nc.force().copy()
+        return self.E.copy(), self.F.copy()
+
+    def compute_energies(self):
+        for i, nc in enumerate(self.ncl):
+            self.E[i] = nc.energy().copy()
+        return self.E.copy()
+
+    def compute_aenergies(self,sae):
+        Ea = np.zeros((self.Nn,self.Na),dtype=np.float64)
+        for i, nc in enumerate(self.ncl):
+            Ea[i,:] = nc.aenergies(sae).copy()
+        return Ea
+
     def compute_mean_props(self):
         for i, nc in enumerate(self.ncl):
             self.E[i] = nc.energy().copy()
             self.F[i] = nc.force().copy()
-        return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na))
 
-def hard_restrain_tortion_force(dhl, pos, frc):
-    frc_c = frc.copy()
+        # dF and C
+        dF = self.F - np.mean(self.F, axis=0)[np.newaxis, :, :]
 
-    # atoms on axis of rotation
-    b = pos[dhl[1]]
-    c = pos[dhl[2]]
+        # Compute var sqr
+        v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
 
-    # bond along axis of rotation
-    BC = c - b
+        # Store intermediates 
+        self.intermediates = {'var_sqr': v2}
 
+        # Return
+        return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(self.F, axis=0))
 
-    # Get all points above and below BC plane
-    a = pos[dhl[0]]
-    d = pos[dhl[3]]
+    def compute_mean_energies(self):
+        for i, nc in enumerate(self.ncl):
+            self.E[i] = nc.energy().copy()
+        return np.mean(self.E, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na))
 
-    # Compute vectors AB, BC, DC
-    BA = a - b
-    CD = d - c
+    def compute_sigma_bias_potential(self, X, S, Efunc, Ffunc, epsilon=0.001, disable_ani=False):
+        if self.Nn < 2:
+            print('Error: compute_sigma_bias_potential requires more than 1 network in the ensemble.')
+            raise ValueError
 
-    # Compute normal tangent vectors ABC, DCB
-    p1 = np.cross(BA,  BC)
-    p2 = np.cross(CD, -BC)
+        # Initial Force
+        self.set_molecule(X, S)
+        E, F = self.compute_props()
 
-    p1 = p1 / np.linalg.norm(p1)
-    p2 = p2 / np.linalg.norm(p2)
+        # dF and C
+        dF = F - np.mean(F, axis=0)[np.newaxis, :, :]
 
-    Fa = frc[dhl[0]]
-    Fb = frc[dhl[1]]
-    Fc = frc[dhl[2]]
-    Fd = frc[dhl[3]]
+        # Forward calc
+        self.set_molecule_per_net(X[np.newaxis, :, :] + epsilon * dF, S)
+        E1, F1 = self.compute_props()
 
-    # Compute force components in direction of tangent vectors for A and D
-    Fan = p1 * np.dot(p1, Fa)
-    Fdn = p2 * np.dot(p2, Fd)
+        # Backward calc
+        self.set_molecule_per_net(X[np.newaxis, :, :] - epsilon * dF, S)
+        E2, F2 = self.compute_props()
 
-    dFa = np.linalg.norm(Fan)
-    dFd = np.linalg.norm(Fdn)
-    Ft = dFa + dFd
+        # Computer ds/dx via central difference
+        ds = np.sum((F1 - F2) / epsilon, axis=0) / (self.Nn * (self.Nn - 1))
 
-    Fan = 0.5*Ft*(Fan/dFa)
-    Fdn = 0.5*Ft*(Fdn/dFd)
+        # Compute var sqr
+        v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
 
-    #lo = dFd/Ft
+        E_bias = Efunc(v2)
+        F_bias = Ffunc(v2, ds)
 
-    # center of axis of rotation
-    o = b + 0.5*BC
-    OC = c - o
+        Eani = np.mean(E, axis=0)
+        Fani = np.mean(F, axis=0)
+        self.intermediates = {'Ebias': E_bias,'Eani': Eani,'Fbias': F_bias,'Fani': Fani,'var_sqr': v2}
 
-    tc = -(np.cross(OC,Fdn) + 0.5*np.cross(CD, Fdn) + 0.5*np.cross(BA, Fan))
-    Fcn = (1.0/np.power(np.linalg.norm(OC),2))*np.cross(tc,OC)
-
-    #print('1) ',np.cross(OC, Fcn),tc,np.cross(OC, Fcn)-tc)
-
-    Fbn = -Fan-Fcn-Fdn
-
-    #if np.linalg.norm(Fcn) > 1.0e-40:
-    #	Fcn = Fcn / np.linalg.norm(Fcn)
-    #else:
-    #    Fcn = Fcn*0.0
-
-    #if np.linalg.norm(Fbn) > 1.0e-40:
-    #	Fbn = Fbn / np.linalg.norm(Fbn)
-    #else:
-    #	Fbn = Fbn*0.0
-
-    #Fcn = Fcn * np.dot(Fcn, Fc)
-    #Fbn = Fbn * np.dot(Fbn, Fb)
-    
-    #print(tfrcA,tfrcD)
-    #print(np.linalg.norm(tfrcA),np.linalg.norm(tfrcD))
-    #print(np.linalg.norm(Fan),np.linalg.norm(Fbn),np.linalg.norm(Fcn),np.linalg.norm(Fdn))
-
-    # Remove tangent force components from A and D
-    #print('2) ',Fan+Fbn+Fcn+Fdn,np.cross(a-o,Fan)+np.cross(b-o,Fbn)+np.cross(c-o,Fcn)+np.cross(d-o,Fdn))
-    #print(np.cross(a-o,Fan)+np.cross(d-o,Fdn),-np.cross(b-o,Fbn)-np.cross(c-o,Fcn))
-    #print('1) ',np.linalg.norm(Fan), np.linalg.norm(Fbn), np.linalg.norm(Fcn), np.linalg.norm(Fdn),)
-    #print(np.linalg.norm(Fan),np.linalg.norm(Fdn))
-    frc_c[dhl[0]] = frc[dhl[0]] - Fan
-    frc_c[dhl[1]] = frc[dhl[1]] - Fbn
-    frc_c[dhl[2]] = frc[dhl[2]] - Fcn
-    frc_c[dhl[3]] = frc[dhl[3]] - Fdn
-    #print('2) ',np.linalg.norm(frc_c[dhl[0]]), np.linalg.norm(frc_c[dhl[1]]), np.linalg.norm(frc_c[dhl[2]]), np.linalg.norm(frc_c[dhl[3]]))
-
-    #print(frc_c[dhl[0]], frc_c[dhl[1]], frc_c[dhl[2]], frc_c[dhl[3]])
-    #print(frc_c[dhl[0]], frc_c[dhl[3]])
-
-    # Return new force
-    return frc_c
+        if not disable_ani:
+            return E_bias+Eani, F_bias+Fani, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(F, axis=0))
+        else:
+            return E_bias, F_bias, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(F, axis=0))
 
 ##-------------------------------------
-## ANI Ensemble ASE interface
+##         Cos cutoff functions
+##--------------------------------------
+def coscut(Rmag, iRc, sRc):
+    return 0.5 * np.cos(math.pi * (Rmag+sRc) * iRc) + 0.5
+
+def dcoscut(Rmag, R, iRc, sRc):
+    return -0.5 * math.pi * iRc * np.sin(math.pi * iRc * (Rmag+sRc)) * R/Rmag
+
+def tanhcut(Rmag, Shf):
+    return 0.5*np.tanh(-20*(Rmag-Shf)) + 0.5
+
+def dtanhcut(Rmag, R, Shf):
+    #return 0.5*np.tanh(-20*(Rmag-Shf)) + 0.5
+    return -0.5*20*(1.0 - np.power(np.tanh(-20*(Rmag-Shf)),2)) * R/Rmag
+
+##-------------------------------------
+##     ANI Ensemble ASE interface
 ##--------------------------------------
 class ANIENS(Calculator):
-    implemented_properties = ['energy', 'forces', 'stress']
+    implemented_properties = ['energy', 'forces', 'stress', 'dipole']
     default_parameters = {'xc': 'ani'}
 
     nolabel = True
 
-    def __init__(self, aniens, sdmax=0.0034691, **kwargs):
+    ### Constructor ###
+    def __init__(self, aniens, sdmax=sys.float_info.max, energy_conversion=conv_au_ev, **kwargs):
         Calculator.__init__(self, **kwargs)
 
         self.nc = aniens
+        self.energy_conversion = energy_conversion
         self.sdmax = sdmax
         self.Setup = True
+
+        self.nc_time=0.0
+
+        self.Epwise = None
+        self.Emodel = None
+
+        self.pwiter = True
+        self.pairwise = False
+        self.add_bias = False
+
+        self.hipmodels = None
 
         # Tortional Restraint List
         self.tres = []
 
-    def set_hard_tortional_restraint(self, tres):
-        self.tres = tres
+        self.Xn = np.zeros((0,0,3), dtype=np.float64)
+        self.Dn = np.zeros((0,0,3), dtype=np.float64)
 
+    ### Set the pairwise functions ###
+    def set_pairwise(self, Efunc, Ffunc):
+        self.Efunc = Efunc
+        self.Ffunc = Ffunc
+        self.pairwise = True
+
+    def set_sigmabias(self,bias_Efunc, bias_Ffunc, epsilon=0.001, disable_ani=False):
+        self.bias_Efunc = bias_Efunc
+        self.bias_Ffunc = bias_Ffunc
+        self.epsilon=epsilon
+        self.disable_ani_in_bias = disable_ani
+        self.add_bias=True
+
+    ### Set HIPNN for dipole ###
+    def set_hipnn_dipole_model(self, hipmodels):
+        self.hipmodels = hipmodels
+
+    def resize_XnDn(self,ne):
+        if ne > self.Xn.shape[1]:
+            self.Xn = np.pad(self.Xn,((0, 0), (0, ne - self.Xn.shape[1]), (0, 0)), 'constant', constant_values=((0, 0), (0, 0), (0, 0)))
+            self.Dn = np.pad(self.Dn,((0, 0), (0, ne - self.Dn.shape[1]), (0, 0)), 'constant', constant_values=((0, 0), (0, 0), (0, 0)))
+        return self.Xn.shape[1]
+
+    ### Adds the pairwise energies/forces to the calculated ###
+    def add_pairwise(self, properties):
+        positions = self.atoms.get_positions()
+
+        mcut = 0.0
+        lcut = 2.5
+
+        if self.pwiter:
+            N = positions.shape[0]
+            self.nl = NeighborList(np.full(N, mcut/2.0), skin=0.25, self_interaction=False)
+            self.Xn = np.zeros((N, 0, 3), dtype=np.float64)
+            self.Dn = np.zeros((N, 0, 3), dtype=np.float64)
+            self.pwiter = False
+
+        #start_time = time.time()
+        self.nl.update(self.atoms)
+
+        Epairwise = 0.0
+        if 'forces' in properties:
+            Fpairwise = 0. * positions
+
+        # loop over all atoms in the cell
+        for ia, posa in enumerate(positions):
+            indices, offsets = self.nl.get_neighbors(ia)
+            #print('Neh/Dsp:', indices.shape, offsets.shape)
+
+            #nposition = positions[indices]
+            R = positions[indices] + np.dot(offsets, self.atoms.get_cell()) - posa[np.newaxis,:]
+            Rmag = np.linalg.norm(R,axis=1)
+            cidx = np.where( (Rmag >= lcut) & (Rmag < mcut)  )
+            sidx = np.where(Rmag >= mcut)
+            E = self.Efunc(Rmag)
+
+            Ecut = coscut(Rmag[cidx], 1.0/(mcut-lcut), lcut)
+            #Ecut = tanhcut(Rmag[cidx], lcut-0.1*lcut)
+            E[cidx] = E[cidx]*Ecut
+            E[sidx] = 0.0*E[sidx]
+
+            Epairwise += E.sum() # Neighbors list supplies only neighbors once (NO DOUBLE COUNT)
+
+            if 'forces' in properties:
+                F = self.Ffunc(Rmag[:,np.newaxis],R)
+                F[cidx] = (E[cidx][:,np.newaxis]*dcoscut(Rmag[cidx][:,np.newaxis], R[cidx], 1.0/(mcut-lcut), lcut)+Ecut[:,np.newaxis]*F[cidx])
+                #F[cidx] = (E[cidx][:,np.newaxis]*dtanhcut(Rmag[cidx][:,np.newaxis], R[cidx], lcut-0.1*lcut)+Ecut[:,np.newaxis]*F[cidx])
+                F[sidx] = 0.0 * F[sidx]
+                Fpairwise[indices] += -F
+                Fpairwise[ia] += np.sum(F,axis=0)
+
+        self.results['energy'] += Epairwise
+        self.Epwise = Epairwise
+        if 'forces' in properties:
+            #print(Fpairwise.shape,np.sum(Fpairwise, axis=1))
+            #print(Fpairwise[0])
+            self.results['forces'] += Fpairwise
+
+    ### Calculate function require by ASE ###
     def calculate(self, atoms=None, properties=['energy'],
                   system_changes=all_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
-        # start_time2 = time.time()
         ## make up for stress
         ## TODO
         # stress_ani = np.zeros((1, 3))
         stress_ani = np.zeros(6)
 
-        if self.Setup or self.nc.ncl[0].request_setup():
+        ## Check if models are initilized (first step)
+        if self.Setup or self.nc.request_setup():
             # Setup molecule for MD
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
             self.nc.set_molecule(xyz.astype(np.float32), atom_symbols)
-            self.nc.set_pbc(self.atoms.get_pbc()[0], self.atoms.get_pbc()[1], self.atoms.get_pbc()[2])
+            self.nc.set_pbc(bool(self.atoms.get_pbc()[0]), bool(self.atoms.get_pbc()[1]), bool(self.atoms.get_pbc()[2]))
+            # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
+            pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros(
+                (3, 3), dtype=np.float32)
+            self.nc.set_cell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
 
             self.Setup = False
+        ## Run this if models are initialized
         else:
-            xyz = self.atoms.get_positions()
+            xyz = self.atoms.get_positions().astype(np.float32)
             # Set the conformers in NeuroChem
-            self.nc.set_coordinates(xyz.astype(np.float32))
+            self.nc.set_coordinates(xyz)
 
             # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
             pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros(
                 (3, 3), dtype=np.float32)
             self.nc.set_cell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
 
-        energy, force, stddev = self.nc.compute_mean_props()
+        ## Compute the model properties (you can speed up ASE energy prediction by not doing force backprop unless needed.)
+        start_time = time.time()
+        if not self.add_bias:
+            energy, force, stddev, Fstddev = self.nc.compute_mean_props()
+            self.Fstddev = Fstddev
+        else:
+            energy, force, stddev, Fstddev = self.nc.compute_sigma_bias_potential(self.atoms.get_positions().astype(np.float32),
+                                                                                  self.atoms.get_chemical_symbols(),
+                                                                                  self.bias_Efunc, self.bias_Ffunc,
+                                                                                  epsilon=self.epsilon,
+                                                                                  disable_ani=self.disable_ani_in_bias)
+            self.Fstddev=Fstddev
+        self.nc_time+=time.time() - start_time
 
-        self.stddev = conv_au_ev * stddev
+        ## convert std dev to correct units
+        self.stddev = self.energy_conversion * stddev
 
-        self.results['energy'] = conv_au_ev * energy
+        ## Store energies in ASE
+        self.results['energy'] = energy
+        self.Emodel = energy
+
+        ## If forces are requested store forces 
         if 'forces' in properties:
-            forces = conv_au_ev * force
+            forces = force
 
             if len(self.tres) > 0:
                 for res in self.tres:
                     forces = hard_restrain_tortion_force(res, xyz, forces)
 
             self.results['forces'] = forces
-        self.results['stress'] = conv_au_ev * stress_ani
 
+        ## Set stress tensor
+        self.results['stress'] = self.energy_conversion * stress_ani
 
+        ## If the HIP-NN model is set run this for dipoles
+        if self.hipmodels is not None:
+            Z = self.atoms.get_atomic_numbers()
+            R = self.atoms.get_positions()
+
+            R = R.reshape([1,len(Z),3])
+            Z = Z.reshape([1, len(Z)]).astype(np.int32)
+
+            dipole = np.zeros((3),dtype=np.float32)
+            for hippy in self.hipmodels:
+                output = hippy.pred_fn([Z, R], shape_output=True)
+                dipole += output[1][0][0]
+            self.results['dipole'] = dipole/len(self.hipmodels)
+
+        ## Compute pairwise if requested
+        if self.pairwise:
+            self.add_pairwise(properties)
+        
+        ## Convert energies and forces to requested units
+        self.results['energy'] = self.energy_conversion * self.results['energy']
+        if 'forces' in properties:
+            self.results['forces'] = self.energy_conversion * self.results['forces']
+
+    ### NL Update function now handled internally ###
     def __update_neighbors(self):
         for a in range(0, len(self.atoms)):
             indices, offsets = self.nlR.get_neighbors(a)
             self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float32))
 
+    ### Return the atomic energies (in eV) ###
     def get_atomicenergies(self, atoms=None, properties=['energy'],
-                           system_changes=all_changes):
+                           system_changes=all_changes,sae=False):
         Calculator.calculate(self, atoms, properties, system_changes)
 
         ## make up for stress
@@ -368,11 +782,33 @@ class ANIENS(Calculator):
         else:
             xyz = self.atoms.get_positions()
             # Set the conformers in NeuroChem
-            self.nc.setCoordinates(coords=xyz.astype(np.float32))
+            self.nc.set_coordinates(xyz.astype(np.float32))
 
-        self.nc.energy()
+        E = self.nc.compute_energies()
 
-        return self.nc.aenergies(True) * conv_au_ev
+        return self.nc.compute_aenergies(sae) * conv_au_ev
+
+##--------------------------------------------------------------
+##        Easy loader for ANI networks in python interface
+##--------------------------------------------------------------
+def aniensloader(model, gpu=0, multigpu=False):
+    # Set locations of all required network files
+    wkdir = model.rsplit('/', 1)[0] + '/'  # Note the relative path
+
+    data = np.loadtxt(model, dtype=str)
+
+    cnstfile = wkdir + data[0]  # AEV parameters
+    saefile = wkdir + data[1]  # Atomic shifts
+    nnfdir = wkdir + data[2]  # network prefix
+    Nn = int(data[3])  # Number of networks in the ensemble
+
+    if multigpu:
+        if not isinstance(gpu, list):
+            raise ValueError('When running on multiple GPUs please supply the GPU indices in a list.')
+        return ensemblemolecule_multigpu(cnstfile, saefile, nnfdir, Nn, gpu)
+    else:
+        return ensemblemolecule(cnstfile, saefile, nnfdir, Nn, gpu)
+
 
 ###
 #   ANI with D3 correction
