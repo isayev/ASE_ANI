@@ -16,6 +16,12 @@ This is a prototype interface for ANI-1x neural network potential for The Atomic
 ## Installation
 Clone this repository into desired folder and add environmental variables from `bashrc_example.sh` to your `.bashrc`. 
 
+To test the code run the python script: examples/ani_quicktest.py
+
+Computed energies on a working installation are (eV):
+Initial Energy:  -2078.502822821320
+Final   Energy:  -2078.504266011399
+
 For use cases please refer to examples folder with several iPython notebooks
 
 ## Cool stuff
