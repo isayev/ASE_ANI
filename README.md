@@ -5,7 +5,7 @@
 
 This is a prototype interface for ANI-1x and ANI-1ccx neural network potentials for The Atomic Simulation Environment (ASE). Current ANI-1x and ANI-1ccx potentials provide predictions for the CHNO elements. 
 
-##REQUIREMENTS:
+## REQUIREMENTS:
 * Python 3.6 (we recommend [Anaconda](https://www.continuum.io/downloads) distribution)
 * Modern NVIDIA GPU, [compute capability 5.0](https://developer.nvidia.com/cuda-gpus) of newer.
 * [CUDA 9.0](https://developer.nvidia.com/cuda-downloads)
