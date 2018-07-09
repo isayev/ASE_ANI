@@ -1,9 +1,9 @@
 # ASE-ANI
 
-### NOTICE: Python binaries built for python 3.6 and CUDA 9
+### NOTICE: Python binaries built for python 3.6 and CUDA 9.2
 ### Works only under Ubuntu variants of Linux 
 
-This is a prototype interface for ANI-1x neural network potential for The Atomic Simulation Environment (ASE). Current ANI-1x potential implements CHNO elements.
+This is a prototype interface for ANI-1x and ANI-1ccx neural network potentials for The Atomic Simulation Environment (ASE). Current ANI-1x and ANI-1ccx potentials provide predictions for the CHNO elements. 
 
 ##REQUIREMENTS:
 * Python 3.6 (we recommend [Anaconda](https://www.continuum.io/downloads) distribution)
@@ -14,13 +14,13 @@ This is a prototype interface for ANI-1x neural network potential for The Atomic
 * MOPAC2012 or MOPAC2016 for some examples to compare results (Optional) 
 
 ## Installation
-Clone this repository into desired folder and add environmental variables from `bashrc_example.sh` to your `.bashrc`. 
+Clone this repository into desired folder and add environmental variables from `bashrc_example.sh` to your `.bashrc`. <br/> 
 
-To test the code run the python script: examples/ani_quicktest.py
+To test the code run the python script: examples/ani_quicktest.py<br/>
 
-Computed energies on a working installation are (eV):
-Initial Energy:  -2078.502822821320
-Final   Energy:  -2078.504266011399
+Computed energies on a working installation are (eV):<br/>
+Initial Energy:  -2078.502822821320 <br/>
+Final   Energy:  -2078.504266011399 <br/>
 
 For use cases please refer to examples folder with several iPython notebooks
 
@@ -51,5 +51,5 @@ Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. ANI-1, A data set of 20 mi
 ### Active learning-based (ANI-1x):
 Justin S. Smith, Ben Nebgen, Nicholas Lubbers, Olexandr Isayev, Adrian E. Roitberg. *Less is more: sampling chemical space with active learning*. The Journal of Chemical Physics, 2018, DOI: [arXiv:1801.09319] (https://arxiv.org/abs/1801.09319)
 
-### Active learning and transfer learning-based (ANI-1ccx potential coming soon!):
+### Active learning and transfer learning-based (ANI-1ccx):
 Justin S. Smith, Benjamin T. Nebgen, Roman Zubatyuk, Nicholas Lubbers, Christian Devereux, Kipton Barros, Sergei Tretiak, Olexandr Isayev, Adrian Roitberg. *Outsmarting Quantum Chemistry Through Transfer Learning*. ChemRxiv, 2018, DOI: [https://doi.org/10.26434/chemrxiv.6744440.v1]
