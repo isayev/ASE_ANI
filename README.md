@@ -49,7 +49,7 @@ Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. *ANI-1: An extensible neur
 Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. ANI-1, A data set of 20 million calculated off-equilibrium conformations for organic molecules. Scientific Data, 4, Article number: 170193, DOI: 10.1038/sdata.2017.193 https://www.nature.com/articles/sdata2017193
 
 ### Active learning-based (ANI-1x):
-Justin S. Smith, Ben Nebgen, Nicholas Lubbers, Olexandr Isayev, Adrian E. Roitberg. *Less is more: sampling chemical space with active learning*. The Journal of Chemical Physics, 2018, DOI: [arXiv:1801.09319] (https://arxiv.org/abs/1801.09319)
+Justin S. Smith, Ben Nebgen, Nicholas Lubbers, Olexandr Isayev, Adrian E. Roitberg. *Less is more: sampling chemical space with active learning*. The Journal of Chemical Physics, 2018, (https://aip.scitation.org/doi/abs/10.1063/1.5023802)
 
 ### Active learning and transfer learning-based (ANI-1ccx):
 Justin S. Smith, Benjamin T. Nebgen, Roman Zubatyuk, Nicholas Lubbers, Christian Devereux, Kipton Barros, Sergei Tretiak, Olexandr Isayev, Adrian Roitberg. *Outsmarting Quantum Chemistry Through Transfer Learning*. ChemRxiv, 2018, DOI: [https://doi.org/10.26434/chemrxiv.6744440.v1]
