@@ -35,5 +35,5 @@ print('[ANI Optimization - Total time:', time.time() - start_time, 'seconds]')
 ef = mol.get_potential_energy()
 print("Final Energy: ",ef)
 
-# Cleanup the calculator class
-mol.calc.nc.cleanup()
+# Cleanup the calculator class (only needed for multGPU runs)
+# mol.calc.nc.cleanup()
