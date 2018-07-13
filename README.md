@@ -10,7 +10,7 @@ This is a prototype interface for ANI-1x and ANI-1ccx neural network potentials 
 * Modern NVIDIA GPU, [compute capability 5.0](https://developer.nvidia.com/cuda-gpus) of newer.
 * [CUDA 9.2](https://developer.nvidia.com/cuda-downloads)
 * [ASE](https://wiki.fysik.dtu.dk/ase/index.html)
-* Modified [ased3](https://github.com/isayev/ased3) for D3 van der Waals correction (Optional) 
+[//]: # * Modified [ased3](https://github.com/isayev/ased3) for D3 van der Waals correction (Optional) 
 * MOPAC2012 or MOPAC2016 for some examples to compare results (Optional) 
 
 ## Installation
