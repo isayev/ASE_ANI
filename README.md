@@ -1,20 +1,25 @@
 # ASE-ANI
 
-### NOTICE: Python binaries built for python 3.6 and CUDA 9
-### Works only under Ubuntu variants of Linux 
+### NOTICE: Python binaries built for python 3.6 and CUDA 9.2
+### Works only under Ubuntu variants of Linux with a NVIDIA GPU
 
-This is a prototype interface for ANI-1x neural network potential for The Atomic Simulation Environment (ASE). Current ANI-1x potential implements CHNO elements.
+This is a prototype interface for ANI-1x and ANI-1ccx neural network potentials for The Atomic Simulation Environment (ASE). Current ANI-1x and ANI-1ccx potentials provide predictions for the CHNO elements. 
 
-##REQUIREMENTS:
+## REQUIREMENTS:
 * Python 3.6 (we recommend [Anaconda](https://www.continuum.io/downloads) distribution)
 * Modern NVIDIA GPU, [compute capability 5.0](https://developer.nvidia.com/cuda-gpus) of newer.
-* [CUDA 9.0](https://developer.nvidia.com/cuda-downloads)
+* [CUDA 9.2](https://developer.nvidia.com/cuda-downloads)
 * [ASE](https://wiki.fysik.dtu.dk/ase/index.html)
-* Modified [ased3](https://github.com/isayev/ased3) for D3 van der Waals correction (Optional) 
 * MOPAC2012 or MOPAC2016 for some examples to compare results (Optional) 
 
 ## Installation
-Clone this repository into desired folder and add environmental variables from `bashrc_example.sh` to your `.bashrc`. 
+Clone this repository into desired folder and add environmental variables from `bashrc_example.sh` to your `.bashrc`. <br/> 
+
+To test the code run the python script: examples/ani_quicktest.py<br/>
+
+Computed energies from the quick test on a working installation are (eV):<br/>
+Initial Energy:  -2078.502822821320 <br/>
+Final   Energy:  -2078.504266011399 <br/>
 
 For use cases please refer to examples folder with several iPython notebooks
 
@@ -37,13 +42,13 @@ https://github.com/isayev/COMP6
 If you use this code, please cite:
 
 ### ANAKIN-ME ML Potential Method:
-Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. *ANI-1: An extensible neural network potential with DFT accuracy at force field computational cost*. Chemical Science, 2017, DOI: [10.1039/C6SC05720A](http://pubs.rsc.org/en/content/articlelanding/2017/sc/c6sc05720a)
+Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. *ANI-1: An extensible neural network potential with DFT accuracy at force field computational cost*. Chemical Science,(2017), DOI: [10.1039/C6SC05720A](http://pubs.rsc.org/en/content/articlelanding/2017/sc/c6sc05720a)
 
 ### Original ANI-1 data:
-Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. ANI-1, A data set of 20 million calculated off-equilibrium conformations for organic molecules. Scientific Data, 4, Article number: 170193, DOI: 10.1038/sdata.2017.193 https://www.nature.com/articles/sdata2017193
+Justin S. Smith, Olexandr Isayev, Adrian E. Roitberg. ANI-1, A data set of 20 million calculated off-equilibrium conformations for organic molecules. Scientific Data, 4 (2017), Article number: 170193, DOI: 10.1038/sdata.2017.193 https://www.nature.com/articles/sdata2017193
 
 ### Active learning-based (ANI-1x):
-Justin S. Smith, Ben Nebgen, Nicholas Lubbers, Olexandr Isayev, Adrian E. Roitberg. *Less is more: sampling chemical space with active learning*. The Journal of Chemical Physics, 2018, DOI: [arXiv:1801.09319] (https://arxiv.org/abs/1801.09319)
+Justin S. Smith, Ben Nebgen, Nicholas Lubbers, Olexandr Isayev, Adrian E. Roitberg. *Less is more: sampling chemical space with active learning*. The Journal of Chemical Physics 148, 241733 (2018), (https://aip.scitation.org/doi/abs/10.1063/1.5023802)
 
-### Active learning and transfer learning-based (ANI-1ccx potential coming soon!):
+### Active learning and transfer learning-based (ANI-1ccx):
 Justin S. Smith, Benjamin T. Nebgen, Roman Zubatyuk, Nicholas Lubbers, Christian Devereux, Kipton Barros, Sergei Tretiak, Olexandr Isayev, Adrian Roitberg. *Outsmarting Quantum Chemistry Through Transfer Learning*. ChemRxiv, 2018, DOI: [https://doi.org/10.26434/chemrxiv.6744440.v1]

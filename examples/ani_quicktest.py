@@ -18,7 +18,7 @@ mol = read('data/water.xyz')
 # Current ANI model options are:
 # '../ani_models/ani-1ccx_8x.info' Coupled cluster transfer learned model
 # '../ani_models/ani-1x_8x.info'   Full ANI-1x wb97x/6-31g* dataset model
-mol.set_calculator(ANIENS(aniensloader('../ani_models/ani-1ccx_8x.info')))
+mol.set_calculator(ANIENS(aniensloader('../ani_models/ani-1ccx_8x.info',0)))
 
 # Calculate energy
 ei = mol.get_potential_energy()
