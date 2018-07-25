@@ -1,0 +1,35 @@
+TITLE      saddle point
+REMARK   1 File created by GaussView 5.0.8
+HETATM    1  C           0       0.441   1.423   0.495                       C
+HETATM    2  C           0      -1.557   0.689  -0.230                       C
+HETATM    3  C           0      -1.557  -0.689  -0.230                       C
+HETATM    4  C           0       0.441  -1.423   0.495                       C
+HETATM    5  C           0       1.310  -0.704  -0.292                       C
+HETATM    6  C           0       1.310   0.704  -0.292                       C
+HETATM    7  H           0       0.379   2.504   0.392                       H
+HETATM    8  H           0      -2.059   1.232   0.566                       H
+HETATM    9  H           0      -2.059  -1.232   0.566                       H
+HETATM   10  H           0       0.379  -2.504   0.392                       H
+HETATM   11  H           0       1.847  -1.218  -1.088                       H
+HETATM   12  H           0       1.847   1.218  -1.088                       H
+HETATM   13  H           0      -1.448  -1.232  -1.164                       H
+HETATM   14  H           0      -1.448   1.232  -1.164                       H
+HETATM   15  H           0       0.120  -1.040   1.458                       H
+HETATM   16  H           0       0.120   1.040   1.458                       H
+END
+CONECT    1    6    7   16
+CONECT    2    3    8   14
+CONECT    3    2    9   13
+CONECT    4    5   10   15
+CONECT    5    4    6   11
+CONECT    6    1    5   12
+CONECT    7    1
+CONECT    8    2
+CONECT    9    3
+CONECT   10    4
+CONECT   11    5
+CONECT   12    6
+CONECT   13    3
+CONECT   14    2
+CONECT   15    4
+CONECT   16    1
