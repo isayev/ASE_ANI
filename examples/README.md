@@ -1,4 +1,4 @@
-## Jupyter Notebook examples how to perform basic computatioal tasks with ANI potential and ASE
+## Jupyter Notebook examples how to perform basic computational tasks with ANI potential and ASE
 
 * ensemble_molecular_dynamics.ipynb - running simple MD NVT simulations
 * geometry_and_thermochemistry.ipynb - basic geometry minimisation and thermochemistry in harmonic approximation
