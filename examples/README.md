@@ -7,10 +7,10 @@
 
 ### conda Installation for NGLView & Co.
 
-conda install -c omnia mdtraj
-conda install -c ambermd pytraj
-git clone https://github.com/arose/nglview
-cd nglview
-pip install -e .
+conda install -c omnia mdtraj<br/>
+conda install -c ambermd pytraj<br/>
+git clone https://github.com/arose/nglview<br/>
+cd nglview<br/>
+pip install -e .<br/>
 
 
