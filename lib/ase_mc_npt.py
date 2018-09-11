@@ -98,6 +98,7 @@ class MCBarostat:
         pv_work = self.pres * (V - V0) * PCONV
 
         mc_term = np.exp((E - E0 + pv_work) * self.beta + self.natoms * np.log(rmu[0]*rmu[1]*rmu[2]))
+        #mc_term = np.exp((E - E0 + pv_work) * self.beta)
         mc_check = rand.random()
 
         # Monte Carlo condition check
