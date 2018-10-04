@@ -38,6 +38,10 @@ https://github.com/isayev/ANI1_dataset
 ## COMP6 benchmark
 https://github.com/isayev/COMP6
 
+## TorchANI
+
+We now have a PyTorch implementation. See: [Documents](https://aiqm.github.io/torchani/) and [GitHub](https://github.com/aiqm/torchani)
+
 ## Citation
 If you use this code, please cite:
 
