@@ -219,8 +219,9 @@ def molecule_worker(task_queue, gpuid, net_list, energy, forces, net_dict):
                 #print(-ncl[i].pwforce().copy()[0])
 
             if net_dict['epw']:
-                energy[netid] +=  ncl[i].pwenergy()
-                forces[netid] +=  ncl[i].pwforce()
+                energy[netid+Nn] = ncl[i].pwenergy().copy()
+                forces[netid+Nn] = ncl[i].pwforce().copy()
+
         Sp = S
 
         task_queue.task_done()
@@ -251,13 +252,16 @@ class ensemblemolecule_multigpu(object):
         self.task_list = [multiprocessing.JoinableQueue() for i in range(self.cores)]
 
         # Construct working containers
-        self.energy = Array('d', range(self.Nn))
-
-        # Construct working containers
         self.manager = multiprocessing.Manager()
 
         self.forces = self.manager.list()
-        self.forces[:] = [[] for i in range(self.Nn)]
+
+        if self.netdict['epw']:
+            self.energy = Array('d', range(2*self.Nn))
+            self.forces[:] = [[] for i in range(2*self.Nn)]
+        else:
+            self.energy = Array('d', range(self.Nn))
+            self.forces[:] = [[] for i in range(self.Nn)]
 
         # Construct threads with pyNeuroChem molecule classes
         self.p_list = []
@@ -292,7 +296,10 @@ class ensemblemolecule_multigpu(object):
                      'cell' : self.cell,
                      'pinv' : self.pinv}
 
-        self.forces[:] = [[] for i in range(self.Nn)]
+        if self.netdict['epw']:
+            self.forces[:] = [[] for i in range(2*self.Nn)]
+        else:
+            self.forces[:] = [[] for i in range(self.Nn)]
 
         # Launch Jobs
         for i in range(self.cores):
@@ -314,7 +321,10 @@ class ensemblemolecule_multigpu(object):
                      'pinv' : self.pinv,
                      'bynet': True}
 
-        self.forces[:] = [[] for i in range(self.Nn)]
+        if self.netdict['epw']:
+            self.forces[:] = [[] for i in range(2*self.Nn)]
+        else:
+            self.forces[:] = [[] for i in range(self.Nn)]
 
         # Launch Jobs
         for i in range(self.cores):
@@ -328,14 +338,17 @@ class ensemblemolecule_multigpu(object):
         self.F = np.stack(self.forces[:])
         return self.E, self.F
 
-    def compute_mean_props(self):
+    def compute_mean_props(self, disable_ani=False):
         data_dict = {'X': self.X,
                      'S': self.S,
                      'pbc' : self.pbc,
                      'cell' : self.cell,
                      'pinv' : self.pinv}
 
-        self.forces[:] = [[] for i in range(self.Nn)]
+        if self.netdict['epw']:
+            self.forces[:] = [[] for i in range(2*self.Nn)]
+        else:
+            self.forces[:] = [[] for i in range(self.Nn)]
 
         # Launch Jobs
         for i in range(self.cores):
@@ -348,16 +361,39 @@ class ensemblemolecule_multigpu(object):
         self.E = np.array(self.energy[:])
         self.F = np.stack(self.forces[:])
 
+        self.intermediates = dict()
+
+        if self.netdict['epw']:
+            if disable_ani:
+                Et = self.E[self.Nn:]
+                Ft = self.F[self.Nn:]
+            else:
+                Et = self.E[:self.Nn] + self.E[self.Nn:]
+                Ft = self.F[:self.Nn] + self.F[self.Nn:]
+
+            self.intermediates['Eele'] = np.mean(self.E[:self.Nn], axis=0)
+            self.intermediates['Epws'] = np.mean(self.E[self.Nn:], axis=0)
+            self.intermediates['Fele'] = np.mean(self.F[:self.Nn], axis=0)
+            self.intermediates['Fpws'] = np.mean(self.F[self.Nn:], axis=0)
+
+        else:
+            if disable_ani:
+                self.E = 0.0 * self.E
+                self.F = 0.0 * self.F
+
+            Et = self.E
+            Ft = self.F
+
         # dF and C
-        dF = self.F - np.mean(self.F, axis=0)[np.newaxis, :, :]
+        dF = Ft - np.mean(Ft, axis=0)[np.newaxis, :, :]
 
         # Compute var sqr
         v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
 
         # Store intermediates 
-        self.intermediates = {'var_sqr': v2}
+        self.intermediates['var_sqr'] = v2
 
-        return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(self.F, axis=0))
+        return np.mean(Et, axis=0), np.mean(Ft, axis=0), np.std(Et, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(Ft, axis=0))
 
     def compute_sigma_bias_potential(self, X, S, Efunc, Ffunc, epsilon=0.001, disable_ani=False):
         if self.Nn < 2:
@@ -425,6 +461,7 @@ class ensemblemolecule(object):
 
         self.E = np.zeros((self.Nn), dtype=np.float64)
         self.F = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
+        self.Q = np.zeros((self.Nn, X.shape[0],), dtype=np.float32)
 
         self.Na = X.shape[0]
 
@@ -476,10 +513,15 @@ class ensemblemolecule(object):
             Ea[i,:] = nc.aenergies(sae).copy()
         return Ea
 
-    def compute_mean_props(self):
+    def compute_mean_props(self, disable_ani=False):
         for i, nc in enumerate(self.ncl):
             self.E[i] = nc.energy().copy()
             self.F[i] = nc.force().copy()
+
+            if disable_ani:
+                self.E[i] = 0.0*self.E[i]
+                self.F[i] = 0.0*self.F[i]
+
 
         # dF and C
         dF = self.F - np.mean(self.F, axis=0)[np.newaxis, :, :]
@@ -497,6 +539,11 @@ class ensemblemolecule(object):
         for i, nc in enumerate(self.ncl):
             self.E[i] = nc.energy().copy()
         return np.mean(self.E, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na))
+
+    def compute_mean_charges(self):
+        for i, nc in enumerate(self.ncl):
+            self.Q[i,:] = nc.get_charges().copy()
+        return np.mean(self.Q, axis=0), np.std(self.Q, axis=0)
 
     def compute_sigma_bias_potential(self, X, S, Efunc, Ffunc, epsilon=0.001, disable_ani=False):
         if self.Nn < 2:
@@ -529,12 +576,12 @@ class ensemblemolecule(object):
 
         Eani = np.mean(E, axis=0)
         Fani = np.mean(F, axis=0)
-        self.intermediates = {'Ebias': E_bias,'Eani': Eani,'Fbias': F_bias,'Fani': Fani,'var_sqr': v2}
+        self.intermediates = {'Ebias': E_bias,'Eele': Eani,'Fbias': F_bias,'Fele': Fani,'var_sqr': v2}
 
         if not disable_ani:
-            return E_bias+Eani, F_bias+Fani, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(F, axis=0))
+            return E_bias+Eani, F_bias+Fani, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.max(np.std(F, axis=0))
         else:
-            return E_bias, F_bias, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(F, axis=0))
+            return E_bias, F_bias, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.max(np.std(F, axis=0))
 
 ##-------------------------------------
 ##         Cos cutoff functions
@@ -581,6 +628,8 @@ class ANIENS(Calculator):
 
         self.hipmodels = None
 
+        self.ani_off = False
+
         # Tortional Restraint List
         self.tres = []
 
@@ -609,6 +658,9 @@ class ANIENS(Calculator):
             self.Xn = np.pad(self.Xn,((0, 0), (0, ne - self.Xn.shape[1]), (0, 0)), 'constant', constant_values=((0, 0), (0, 0), (0, 0)))
             self.Dn = np.pad(self.Dn,((0, 0), (0, ne - self.Dn.shape[1]), (0, 0)), 'constant', constant_values=((0, 0), (0, 0), (0, 0)))
         return self.Xn.shape[1]
+
+    def disable_ani(self):
+        self.ani_off = True
 
     ### Adds the pairwise energies/forces to the calculated ###
     def add_pairwise(self, properties):
@@ -703,7 +755,7 @@ class ANIENS(Calculator):
         ## Compute the model properties (you can speed up ASE energy prediction by not doing force backprop unless needed.)
         start_time = time.time()
         if not self.add_bias:
-            energy, force, stddev, Fstddev = self.nc.compute_mean_props()
+            energy, force, stddev, Fstddev = self.nc.compute_mean_props(disable_ani=self.ani_off)
             self.Fstddev = Fstddev
         else:
             energy, force, stddev, Fstddev = self.nc.compute_sigma_bias_potential(self.atoms.get_positions().astype(np.float32),
