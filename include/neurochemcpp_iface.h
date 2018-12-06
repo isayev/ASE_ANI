@@ -11,6 +11,8 @@ class moleculecpp;
 namespace neurochem {
 
 CUcontext context;
+CUdevice device;
+
 bool setup_molecule_cpp = true;
 std::list<moleculecpp*> molecule_instances;
 
