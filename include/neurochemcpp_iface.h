@@ -4,11 +4,13 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <cuda.h>
 
 class moleculecpp;
 
 namespace neurochem {
 
+CUcontext context;
 bool setup_molecule_cpp = true;
 std::list<moleculecpp*> molecule_instances;
 
