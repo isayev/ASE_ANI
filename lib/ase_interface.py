@@ -446,13 +446,19 @@ class ensemblemolecule_multigpu(object):
 ## Class for ANI ensemble prediction
 ##--------------------------------------
 class ensemblemolecule(object):
-    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False, forcesigma=False):
+    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False, forcesigma=False, enablepairwise=False, net_start_id=0):
         # Number of networks
         self.Nn = Nnet
 
+        self.enablepairwise = enablepairwise
+
         # Construct pyNeuroChem molecule classes
-        self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix + str(i) + '/networks/', gpuid, sinet) for i in
+        self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix + str(i+net_start_id) + '/networks/', gpuid, sinet) for i in
                     range(self.Nn)]
+
+        if enablepairwise:
+            for nc in self.ncl:
+                nc.setPairWise()
 
 
     def set_molecule(self, X, S):
@@ -462,6 +468,10 @@ class ensemblemolecule(object):
         self.E = np.zeros((self.Nn), dtype=np.float64)
         self.F = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
         self.Q = np.zeros((self.Nn, X.shape[0],), dtype=np.float32)
+
+        if self.enablepairwise:
+            self.Ep = np.zeros((self.Nn), dtype=np.float64)
+            self.Fp = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
 
         self.Na = X.shape[0]
 
@@ -518,6 +528,11 @@ class ensemblemolecule(object):
             self.E[i] = nc.energy().copy()
             self.F[i] = nc.force().copy()
 
+            if self.enablepairwise:
+                Epw = nc.pwenergy().copy()
+                self.E[i] += Epw
+                self.F[i] += nc.pwforce().copy()
+
             if disable_ani:
                 self.E[i] = 0.0*self.E[i]
                 self.F[i] = 0.0*self.F[i]
@@ -531,6 +546,11 @@ class ensemblemolecule(object):
 
         # Store intermediates 
         self.intermediates = {'var_sqr': v2}
+
+        #self.intermediates['Eele'] = np.mean(self.E[:self.Nn], axis=0)
+        #self.intermediates['Epws'] = np.mean(self.E[self.Nn:], axis=0)
+        #self.intermediates['Fele'] = np.mean(self.F[:self.Nn], axis=0)
+        #self.intermediates['Fpws'] = np.mean(self.F[self.Nn:], axis=0)
 
         # Return
         return np.mean(self.E, axis=0), np.mean(self.F, axis=0), np.std(self.E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(self.F, axis=0))
