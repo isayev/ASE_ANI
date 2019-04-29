@@ -517,6 +517,13 @@ class ensemblemolecule(object):
             self.E[i] = nc.energy().copy()
         return self.E.copy()
 
+    #def compute_stress_virial(self):
+    #    self.W = np.zeros((self.Nn, self.Na, 3, 3))
+    #
+    #    for i, nc in enumerate(self.ncl):
+    #        self.W[i] = nc.get_atomic_virials().copy()
+    #    return np.sum(np.mean(self.W,axis=0),axis=0)
+
     def compute_aenergies(self,sae):
         Ea = np.zeros((self.Nn,self.Na),dtype=np.float64)
         for i, nc in enumerate(self.ncl):
@@ -752,7 +759,7 @@ class ANIENS(Calculator):
             # Setup molecule for MD
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
-            xyz = self.atoms.get_positions()
+            xyz = self.atoms.get_positions(wrap=False)
             self.nc.set_molecule(xyz.astype(np.float32), atom_symbols)
             self.nc.set_pbc(bool(self.atoms.get_pbc()[0]), bool(self.atoms.get_pbc()[1]), bool(self.atoms.get_pbc()[2]))
             # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
@@ -763,7 +770,7 @@ class ANIENS(Calculator):
             self.Setup = False
         ## Run this if models are initialized
         else:
-            xyz = self.atoms.get_positions().astype(np.float32)
+            xyz = self.atoms.get_positions(wrap=False).astype(np.float32)
             # Set the conformers in NeuroChem
             self.nc.set_coordinates(xyz)
 
@@ -803,8 +810,12 @@ class ANIENS(Calculator):
 
             self.results['forces'] = forces
 
+        #if 'forces' in properties and 'stress' in properties:
+        #    self.results['stress'] = self.nc.compute_stress_virial()
+        #    print(self.results['stress'])
+
         ## Set stress tensor
-        self.results['stress'] = self.energy_conversion * stress_ani
+        self.energy_conversion * stress_ani
 
         ## If the HIP-NN model is set run this for dipoles
         if self.hipmodels is not None:
