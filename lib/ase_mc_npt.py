@@ -6,7 +6,7 @@ import numpy.random as rand
 global PCONV
 global KB
 PCONV = 6.241509E-7
-KB = 8.61733E-5
+KB = 8.6173303E-5
 
 class MCBarostat:
     """Monte Carlo Barostat (constant N, P, T) molecular dynamics.
@@ -42,17 +42,17 @@ class MCBarostat:
     class (e.g., Langevin) and thus called at an interval specified by the user."""
 
     def __init__(self, atoms, temperature, pressure,
-                   isotropic=True, dV_max_init=0.02, dV_interval=10, dV_scale=1.1):
+                   isotropic=True, dV_max_init=0.01, dV_interval=10, dV_scale=1.1):
         self.atoms = atoms
         self.pres = pressure
         self.iso = isotropic
 
         self.temp = temperature
-        self.beta = -1. / (self.temp * KB)
+        self.kT = (self.temp * KB)
 
         self.natoms = self.atoms.get_number_of_atoms()
 
-        self.dV_max = dV_max_init
+        self.dV_max = dV_max_init * self.atoms.get_volume()
         self.dV_interval = dV_interval
         self.dV_scale = dV_scale
 
@@ -64,59 +64,109 @@ class MCBarostat:
 
     def set_temperature(self, temperature):
         self.temp = temperature
-        self.beta = -1. / (self.temp * KB)
+        self.kT = (self.temp * KB)
 
     def step(self):
         self.mcbar_attempts += 1
-
-        # Get energy, volume for current system configuration
         E0 = self.atoms.get_potential_energy()
         V0 = self.atoms.get_volume()
         cell0 = self.atoms.get_cell()
 
-        dV = np.zeros(3)
+        # dV = np.zeros(3)
+        # if self.iso:
+        #      dV[:] = (rand.random() - 0.5) * self.dV_max
+        # else:
+        #      dim = rand.random_integers(0,2)
+        #      dV[dim] = 2.0 * (rand.random() - 0.5) * self.dV_max
 
-        # Random change to fractional unit cell volume in range (-0.5*dV_max,0.5*dV_max)
-        if self.iso:
-            dV[:] = (rand.random() - 0.5) * self.dV_max
-        else:
-            dim = rand.random_integers(0,2)
-            dV[dim] = (rand.random() - 0.5) * self.dV_max
+        dV = 2.0 * (rand.random() - 0.5) * self.dV_max
+        Vn = V0+dV
 
-        rmu = (1. + dV) ** (1./3.)
-        # Is this correct for non-rectangular cells?
-        cell = cell0.copy()
-        cell[0] *= rmu[0]
-        cell[1] *= rmu[1]
-        cell[2] *= rmu[2]
-        # Scale system to new unit cell and get new energy, volume
+        lengthScale = np.power(Vn/V0,1.0/3.0)
+        cell = cell0 * lengthScale
         self.atoms.set_cell(cell,scale_atoms=True)
 
-        E = self.atoms.get_potential_energy()
-        V = self.atoms.get_volume()
-        
-        pv_work = self.pres * (V - V0) * PCONV
+        En = self.atoms.get_potential_energy()
 
-        #mc_term = np.exp((E - E0 + pv_work) * self.beta + self.natoms * np.log(rmu[0]*rmu[1]*rmu[2]))
-        mc_term = np.exp((E - E0 + pv_work) * self.beta)
-        mc_check = rand.random()
+        w = En - E0 + self.pres * dV * PCONV - self.kT * self.natoms * np.log(Vn/V0)
+        #w = En - E0 + self.pres * dV * PCONV
 
-        # Monte Carlo condition check
-        if mc_check < mc_term:
-            self.mcbar_successes += 1
-        else:
+        if w > 0 and rand.random() > np.exp(-w / self.kT):
+            # Reject the step.
             # On failure, revert the system to previous volume
             self.atoms.set_cell(cell0,scale_atoms=True)
+        else:
+            self.mcbar_successes += 1
 
         # Check if we are succeeding too often or not often enough, and change dV_max if so
         if self.mcbar_attempts % self.dV_interval == 0:
             if self.mcbar_successes >= 0.75 * self.mcbar_attempts:
-                print("MC BAR INCREASE DVMAX",self.mcbar_attempts,self.mcbar_successes)
                 self.dV_max *= self.dV_scale
+                print("MC BAR INCREASE DVMAX",self.dV_max,self.mcbar_attempts,self.mcbar_successes)
                 self.mcbar_attempts = 0
                 self.mcbar_successes = 0
             elif self.mcbar_successes <= 0.25 * self.mcbar_attempts:
-                print("MC BAR DECREASE DVMAX:",self.mcbar_attempts,self.mcbar_successes)
                 self.dV_max /= self.dV_scale
+                print("MC BAR DECREASE DVMAX:",self.dV_max,self.mcbar_attempts,self.mcbar_successes)
                 self.mcbar_attempts = 0
                 self.mcbar_successes = 0
+
+    # def step(self):
+    #     self.mcbar_attempts += 1
+    #
+    #     # Get energy, volume for current system configuration
+    #     E0 = self.atoms.get_potential_energy()
+    #     V0 = self.atoms.get_volume()
+    #     cell0 = self.atoms.get_cell()
+    #
+    #     dV = np.zeros(3)
+    #
+    #     # Random change to fractional unit cell volume in range (-0.5*dV_max,0.5*dV_max)
+    #     if self.iso:
+    #         dV[:] = (rand.random() - 0.5) * self.dV_max
+    #     else:
+    #         dim = rand.random_integers(0,2)
+    #         dV[dim] = (rand.random() - 0.5) * self.dV_max
+    #
+    #     rmu = (1. + dV) ** (1./3.)
+    #     # Is this correct for non-rectangular cells?
+    #     cell = cell0.copy()
+    #     cell[0] *= rmu[0]
+    #     cell[1] *= rmu[1]
+    #     cell[2] *= rmu[2]
+    #     # Scale system to new unit cell and get new energy, volume
+    #     self.atoms.set_cell(cell,scale_atoms=True)
+    #
+    #     E = self.atoms.get_potential_energy()
+    #     V = self.atoms.get_volume()
+    #
+    #     #print('V/V0:',V/V0,'rmu**3',rmu[0]*rmu[1]*rmu[2])
+    #
+    #     pv_work = self.pres * (V - V0) * PCONV
+    #
+    #     #print(np.exp(self.natoms * (np.log(rmu[0]*rmu[1]*rmu[2])-np.log(V/V0))))
+    #     #print((E - E0 + pv_work) * self.beta,self.natoms * np.log(rmu[0]*rmu[1]*rmu[2]))
+    #     mc_term = np.exp((E - E0 + pv_work) * self.beta + self.natoms * np.log(rmu[0]*rmu[1]*rmu[2]))
+    #     #mc_term = np.exp((E - E0 + pv_work) * self.beta)
+    #     mc_check = rand.random()
+    #
+    #     # Monte Carlo condition check
+    #     if mc_check < mc_term:
+    #         self.mcbar_successes += 1
+    #     else:
+    #         # On failure, revert the system to previous volume
+    #         self.atoms.set_cell(cell0,scale_atoms=True)
+    #
+    #     # Check if we are succeeding too often or not often enough, and change dV_max if so
+    #     if self.mcbar_attempts % self.dV_interval == 0:
+    #         print('Acceptance Ratio:',self.mcbar_successes/self.mcbar_attempts)
+    #         if self.mcbar_successes >= 0.75 * self.mcbar_attempts:
+    #             self.dV_max *= self.dV_scale
+    #             print("MC BAR INCREASE DVMAX",self.dV_max,self.mcbar_attempts,self.mcbar_successes)
+    #             self.mcbar_attempts = 0
+    #             self.mcbar_successes = 0
+    #         elif self.mcbar_successes <= 0.25 * self.mcbar_attempts:
+    #             self.dV_max /= self.dV_scale
+    #             print("MC BAR DECREASE DVMAX:",self.dV_max,self.mcbar_attempts,self.mcbar_successes)
+    #             self.mcbar_attempts = 0
+    #             self.mcbar_successes = 0
