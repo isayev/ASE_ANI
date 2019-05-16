@@ -857,15 +857,15 @@ class ANIENS(Calculator):
         #Ekin = atoms.get_kinetic_energy() / len(atoms)
         #T =  Ekin / (1.5 * units.kB)
         #self.results['stress'] = -(np.eye(3)*(len(atoms) * units.kB * T)/(3*V) + self.energy_conversion*stress_ani/(V))
-        #V = atoms.get_volume()
+        V = atoms.get_volume()
 
-        #Ekin = atoms.get_kinetic_energy() / len(atoms)
-        #T =  Ekin / (1.5 * units.kB)
+        Ekin = atoms.get_kinetic_energy() / len(atoms)
+        T =  Ekin / (1.5 * units.kB)
         stress_ani, stress_ani_sigma = self.nc.compute_stress_virial()
         #print('MATS:','\n',1602.1766208*np.eye(3)*(len(atoms) * units.kB * T)/V,' ',V,' ',T,'\n',-1602.1766208*self.energy_conversion*stress_ani/V)
         #self.results['stress'] = -(np.eye(3)*(len(atoms) * units.kB * T)/(V) + self.energy_conversion*stress_ani/V)
         #print(self.results['stress'])
-        self.results['stress'] = -self.energy_conversion * stress_ani
+        self.results['stress'] = -self.energy_conversion * stress_ani/V
 
         #print(self.results['stress'])
 
@@ -891,6 +891,9 @@ class ANIENS(Calculator):
         self.results['energy'] = self.energy_conversion * self.results['energy']
         if 'forces' in properties:
             self.results['forces'] = self.energy_conversion * self.results['forces']
+
+        if 'dipole' in properties:
+            self.results['dipole'] = np.sum((self.nc.compute_mean_charges()[0]*xyz.T).T,axis=0)
 
     ### NL Update function now handled internally ###
     def __update_neighbors(self):
@@ -1113,7 +1116,7 @@ if d3present:
                 damp = dampbj
             else:
                 damp = damp0
-    
+   
             rs6 = s18 = rs18 = s6 = None
     
             try:
