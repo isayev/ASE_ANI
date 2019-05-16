@@ -153,7 +153,7 @@ class ANI(Calculator):
 ##-------------------------------------
 ##      Molecule worker class
 ##--------------------------------------
-def molecule_worker(task_queue, gpuid, net_list, energy, forces, net_dict):
+def molecule_worker(task_queue, gpuid, net_list, energy, forces, stress, net_dict):
     print('Building...')
     ncl = [pync.molecule(net_dict['cns'], net_dict['sae'], net_dict['nnf'] + str(i) + '/networks/', gpuid, False) for i
            in net_list]
@@ -214,6 +214,7 @@ def molecule_worker(task_queue, gpuid, net_list, energy, forces, net_dict):
 
             energy[netid] = ncl[i].energy().copy()
             forces[netid] = ncl[i].force().copy()
+            stress[netid] = np.sum(ncl[i].get_atomic_virials().copy(),axis=0)
             #if netid == 0 and net_dict['epw']:
                 #energy[netid] += ncl[i].pwenergy()
                 #forces[netid] += ncl[i].pwforce()
@@ -257,20 +258,23 @@ class ensemblemolecule_multigpu(object):
         self.manager = multiprocessing.Manager()
 
         self.forces = self.manager.list()
+        self.stress = self.manager.list()
 
         if self.netdict['epw']:
             self.energy = Array('d', range(2*self.Nn))
             self.forces[:] = [[] for i in range(2*self.Nn)]
+            self.stress[:] = [[] for i in range(2*self.Nn)]
         else:
             self.energy = Array('d', range(self.Nn))
             self.forces[:] = [[] for i in range(self.Nn)]
+            self.stress[:] = [[] for i in range(self.Nn)]
 
         # Construct threads with pyNeuroChem molecule classes
         self.p_list = []
         for i in range(self.cores):
             self.net_list = [j + int(self.Nn / self.cores) * i for j in range(int(self.Nn / self.cores))]
             self.p_list.append(
-                Process(target=molecule_worker, args=(self.task_list[i], gpu_list[i], self.net_list, self.energy, self.forces, self.netdict)))
+                Process(target=molecule_worker, args=(self.task_list[i], gpu_list[i], self.net_list, self.energy, self.forces, self.stress, self.netdict)))
             self.p_list[-1].start()
 
     def request_setup(self):
@@ -299,8 +303,10 @@ class ensemblemolecule_multigpu(object):
                      'pinv' : self.pinv}
 
         if self.netdict['epw']:
+            self.stress[:] = [[] for i in range(2*self.Nn)]
             self.forces[:] = [[] for i in range(2*self.Nn)]
         else:
+            self.stress[:] = [[] for i in range(self.Nn)]
             self.forces[:] = [[] for i in range(self.Nn)]
 
         # Launch Jobs
@@ -313,7 +319,8 @@ class ensemblemolecule_multigpu(object):
 
         self.E = np.array(self.energy[:])
         self.F = np.stack(self.forces[:])
-        return self.E, self.F
+        self.W = np.stack(self.stress[:])
+        return self.E, self.F, self.W
 
     def compute_props_by_net(self, X, S):
         data_dict = {'X': X,
@@ -324,8 +331,10 @@ class ensemblemolecule_multigpu(object):
                      'bynet': True}
 
         if self.netdict['epw']:
+            self.stress[:] = [[] for i in range(2*self.Nn)]
             self.forces[:] = [[] for i in range(2*self.Nn)]
         else:
+            self.stress[:] = [[] for i in range(self.Nn)]
             self.forces[:] = [[] for i in range(self.Nn)]
 
         # Launch Jobs
@@ -338,7 +347,8 @@ class ensemblemolecule_multigpu(object):
 
         self.E = np.array(self.energy[:])
         self.F = np.stack(self.forces[:])
-        return self.E, self.F
+        self.W = np.stack(self.stress[:])
+        return self.E, self.F, self.W
 
     def compute_mean_props(self, disable_ani=False):
         data_dict = {'X': self.X,
@@ -348,8 +358,10 @@ class ensemblemolecule_multigpu(object):
                      'pinv' : self.pinv}
 
         if self.netdict['epw']:
+            self.stress[:] = [[] for i in range(2*self.Nn)]
             self.forces[:] = [[] for i in range(2*self.Nn)]
         else:
+            self.stress[:] = [[] for i in range(self.Nn)]
             self.forces[:] = [[] for i in range(self.Nn)]
 
         # Launch Jobs
@@ -362,6 +374,7 @@ class ensemblemolecule_multigpu(object):
 
         self.E = np.array(self.energy[:])
         self.F = np.stack(self.forces[:])
+        self.W = np.stack(self.stress[:])
 
         self.intermediates = dict()
 
@@ -382,9 +395,11 @@ class ensemblemolecule_multigpu(object):
             if disable_ani:
                 self.E = 0.0 * self.E
                 self.F = 0.0 * self.F
+                self.W = 0.0 * self.W
 
             Et = self.E
             Ft = self.F
+            Wt = self.W
 
         # dF and C
         dF = Ft - np.mean(Ft, axis=0)[np.newaxis, :, :]
@@ -398,8 +413,7 @@ class ensemblemolecule_multigpu(object):
         return np.mean(Et, axis=0), np.mean(Ft, axis=0), np.std(Et, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(Ft, axis=0))
 
     def compute_stress_virial(self):
-        W = np.zeros((self.Na, 3, 3))
-        return W,W
+        return np.mean(self.W,axis=0),np.mean(np.std(self.W,axis=0))
 
     def compute_sigma_bias_potential(self, X, S, Efunc, Ffunc, epsilon=0.001, disable_ani=False):
         if self.Nn < 2:
@@ -530,7 +544,7 @@ class ensemblemolecule(object):
             self.Wi[i] = nc.get_atomic_virials().copy()
 
         W = np.mean(self.Wi, axis=0)
-        return np.sum(W,axis=0),np.std(W,axis=0)
+        return -np.sum(W,axis=0),np.std(W,axis=0)# nEGATIVE NEEDS TO BE FIXED INSIDE NEUROCHEM rJ-rI
 
     def compute_aenergies(self,sae):
         Ea = np.zeros((self.Nn,self.Na),dtype=np.float64)
@@ -761,12 +775,13 @@ class ANIENS(Calculator):
         ## TODO
         # stress_ani = np.zeros((1, 3))
 
+        start_time = time.time()
         ## Check if models are initilized (first step)
         if self.Setup or self.nc.request_setup():
             # Setup molecule for MD
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
-            xyz = self.atoms.get_positions(wrap=False)
+            xyz = self.atoms.get_positions(wrap=True)
             self.nc.set_molecule(xyz.astype(np.float32), atom_symbols)
             self.nc.set_pbc(bool(self.atoms.get_pbc()[0]), bool(self.atoms.get_pbc()[1]), bool(self.atoms.get_pbc()[2]))
             #self.nc.set_pbc(False,False,False)
@@ -778,7 +793,7 @@ class ANIENS(Calculator):
             self.Setup = False
         ## Run this if models are initialized
         else:
-            xyz = self.atoms.get_positions(wrap=False).astype(np.float32)
+            xyz = self.atoms.get_positions(wrap=True).astype(np.float32)
             # Set the conformers in NeuroChem
             self.nc.set_coordinates(xyz)
 
@@ -788,7 +803,6 @@ class ANIENS(Calculator):
             self.nc.set_cell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
 
         ## Compute the model properties (you can speed up ASE energy prediction by not doing force backprop unless needed.)
-        start_time = time.time()
         if not self.add_bias:
             energy, force, stddev, Fstddev = self.nc.compute_mean_props(disable_ani=self.ani_off)
             self.Fstddev = Fstddev
@@ -823,7 +837,6 @@ class ANIENS(Calculator):
             self.results['forces'] = forces
 
         #if 'stress' in properties:
-        stress_ani, stress_ani_sigma = self.nc.compute_stress_virial()
         #stress_ani = np.zeros((3,3))
         #stress_ani_sigma = 0.0
         #print(stress_ani)
@@ -831,7 +844,7 @@ class ANIENS(Calculator):
         #    stress_ani = np.zeros(6)
 
         ## Set stress tensor
-        V = self.atoms.get_cell()[0,0]*self.atoms.get_cell()[1,1]*self.atoms.get_cell()[2,2]
+        #V = self.atoms.get_cell()[0,0]*self.atoms.get_cell()[1,1]*self.atoms.get_cell()[2,2]
 
         #mu = atoms.get_velocities()
         #ma = atoms.get_masses()
@@ -843,8 +856,16 @@ class ANIENS(Calculator):
 
         #Ekin = atoms.get_kinetic_energy() / len(atoms)
         #T =  Ekin / (1.5 * units.kB)
-        #self.results['stress'] = -(np.eye(3)*(len(atoms) * units.kB * T)/V + self.energy_conversion*stress_ani/V)
-        self.results['stress'] = -self.energy_conversion * stress_ani / V
+        #self.results['stress'] = -(np.eye(3)*(len(atoms) * units.kB * T)/(3*V) + self.energy_conversion*stress_ani/(V))
+        V = atoms.get_volume()
+
+        Ekin = atoms.get_kinetic_energy() / len(atoms)
+        T =  Ekin / (1.5 * units.kB)
+        stress_ani, stress_ani_sigma = self.nc.compute_stress_virial()
+        #print('MATS:','\n',1602.1766208*np.eye(3)*(len(atoms) * units.kB * T)/V,' ',V,' ',T,'\n',-1602.1766208*self.energy_conversion*stress_ani/V)
+        #self.results['stress'] = -(np.eye(3)*(len(atoms) * units.kB * T)/(V) + self.energy_conversion*stress_ani/V)
+        #print(self.results['stress'])
+        self.results['stress'] = -self.energy_conversion * stress_ani/V
 
         #print(self.results['stress'])
 
@@ -870,9 +891,6 @@ class ANIENS(Calculator):
         self.results['energy'] = self.energy_conversion * self.results['energy']
         if 'forces' in properties:
             self.results['forces'] = self.energy_conversion * self.results['forces']
-
-        if 'dipole' in properties:
-            self.results['dipole'] = np.sum((self.nc.compute_mean_charges()[0]*xyz.T).T,axis=0)
 
     ### NL Update function now handled internally ###
     def __update_neighbors(self):
@@ -1095,7 +1113,7 @@ if d3present:
                 damp = dampbj
             else:
                 damp = damp0
-   
+    
             rs6 = s18 = rs18 = s6 = None
     
             try:
