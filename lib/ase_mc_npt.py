@@ -88,8 +88,8 @@ class MCBarostat:
 
         En = self.atoms.get_potential_energy()
 
-        w = En - E0 + self.pres * dV * PCONV - self.kT * self.natoms * np.log(Vn/V0)
-        #w = En - E0 + self.pres * dV * PCONV
+        #w = En - E0 + self.pres * dV * PCONV - self.kT * self.natoms * np.log(Vn/V0)
+        w = En - E0 + self.pres * dV * PCONV
 
         if w > 0 and rand.random() > np.exp(-w / self.kT):
             # Reject the step.
@@ -100,6 +100,7 @@ class MCBarostat:
 
         # Check if we are succeeding too often or not often enough, and change dV_max if so
         if self.mcbar_attempts % self.dV_interval == 0:
+            print('Acceptance Ratio:',self.mcbar_successes/self.mcbar_attempts)
             if self.mcbar_successes >= 0.75 * self.mcbar_attempts:
                 self.dV_max *= self.dV_scale
                 print("MC BAR INCREASE DVMAX",self.dV_max,self.mcbar_attempts,self.mcbar_successes)
