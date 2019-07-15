@@ -544,7 +544,7 @@ class ensemblemolecule(object):
             self.Wi[i] = nc.get_atomic_virials().copy()
 
         W = np.mean(self.Wi, axis=0)
-        return -np.sum(W,axis=0),np.std(np.sum(self.Wi,axis=1),axis=0)# nEGATIVE NEEDS TO BE FIXED INSIDE NEUROCHEM rJ-rI
+        return np.sum(W,axis=0),np.std(np.sum(self.Wi,axis=1),axis=0)# nEGATIVE NEEDS TO BE FIXED INSIDE NEUROCHEM rJ-rI
 
     def compute_aenergies(self,sae):
         Ea = np.zeros((self.Nn,self.Na),dtype=np.float64)
@@ -781,7 +781,8 @@ class ANIENS(Calculator):
             # Setup molecule for MD
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
-            xyz = self.atoms.get_positions(wrap=any(atoms.get_pbc()))
+            #xyz = self.atoms.get_positions(wrap=any(atoms.get_pbc()))
+            xyz = self.atoms.get_positions(wrap=False)
             self.nc.set_molecule(xyz.astype(np.float32), atom_symbols)
             self.nc.set_pbc(bool(self.atoms.get_pbc()[0]), bool(self.atoms.get_pbc()[1]), bool(self.atoms.get_pbc()[2]))
             #self.nc.set_pbc(False,False,False)
@@ -793,7 +794,8 @@ class ANIENS(Calculator):
             self.Setup = False
         ## Run this if models are initialized
         else:
-            xyz = self.atoms.get_positions(wrap=any(atoms.get_pbc())).astype(np.float32)
+            #xyz = self.atoms.get_positions(wrap=any(atoms.get_pbc())).astype(np.float32)
+            xyz = self.atoms.get_positions(wrap=False).astype(np.float32)
             # Set the conformers in NeuroChem
             self.nc.set_coordinates(xyz)
 
@@ -866,7 +868,7 @@ class ANIENS(Calculator):
         #T =  Ekin / (1.5 * units.kB)
         stress_ani, stress_ani_sigma = self.nc.compute_stress_virial()
         #print('MATS:','\n',1602.1766208*np.eye(3)*(len(atoms) * units.kB * T)/V,' ',V,' ',T,'\n',-1602.1766208*self.energy_conversion*stress_ani/V)
-        #self.results['stress'] = -(np.eye(3)*(len(atoms) * units.kB * T)/(V) + self.energy_conversion*stress_ani/V)
+        #self.results['stress'] = -(np.eye(3)*(len(atoms) * units.kB * T)/V + self.energy_conversion*stress_ani/V)
         #print(self.results['stress'])
         self.results['stress'] = -self.energy_conversion * stress_ani/V
 
