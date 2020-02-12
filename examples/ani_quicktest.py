@@ -29,15 +29,15 @@ fi = mol.get_forces()
 print("Initial Forces: \n",fi)
 
 # Optimize molecule
-#print("Optimizing...")
-#start_time = time.time()
-#dyn = LBFGS(mol)
-#dyn.run(fmax=0.001)
-#print('[ANI Optimization - Total time:', time.time() - start_time, 'seconds]')
+print("Optimizing...")
+start_time = time.time()
+dyn = LBFGS(mol)
+dyn.run(fmax=0.001)
+print('[ANI Optimization - Total time:', time.time() - start_time, 'seconds]')
 
 # Calculate energy
-#ef = mol.get_potential_energy()
-#print("Final Energy: ",ef)
+ef = mol.get_potential_energy()
+print("Final Energy: ",ef)
 
 # Cleanup the calculator class (only needed for multGPU runs)
 # mol.calc.nc.cleanup()

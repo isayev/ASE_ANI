@@ -15,7 +15,7 @@ try:
     from ased3._d3 import d3
     d3present = True
 except ImportError:
-    print('van Der Waals correction will be unavailable. Please install ased3')
+    #print('van Der Waals correction will be unavailable. Please install ased3')
     d3present = False
     pass
 
@@ -70,19 +70,19 @@ class ANI(Calculator):
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
-            self.nc.setMolecule(coords=xyz.astype(np.float32),types=atom_symbols)
+            self.nc.setMolecule(coords=xyz.astype(np.float64),types=atom_symbols)
             self.nc.setPBC(self.atoms.get_pbc()[0],self.atoms.get_pbc()[1],self.atoms.get_pbc()[2])
 
             self.Setup=False
         else:
             xyz = self.atoms.get_positions()
             # Set the conformers in NeuroChem
-            self.nc.setCoordinates(coords=xyz.astype(np.float32))
+            self.nc.setCoordinates(coords=xyz.astype(np.float64))
 
 
             # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
-            pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros((3,3), dtype=np.float32)
-            self.nc.setCell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
+            pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float64) if atoms.pbc.all() else np.zeros((3,3), dtype=np.float64)
+            self.nc.setCell((self.atoms.get_cell()).astype(np.float64), pbc_inv)
             #self.nc.setCell((self.atoms.get_cell()).astype(np.float32),(np.linalg.inv(self.atoms.get_cell())).astype(np.float32))
 
         #start_time2 = time.time()
@@ -108,7 +108,7 @@ class ANI(Calculator):
             #if an[a] == 8:
                 #print(an[a])
                 #szs.append(len(indices))
-            self.nc.setNeighbors(ind=a,indices=indices.astype(np.int32),offsets=offsets.astype(np.float32))
+            self.nc.setNeighbors(ind=a,indices=indices.astype(np.int32),offsets=offsets.astype(np.float64))
 
         #indices, offsets = self.nlR.get_neighbors(302)
         #f = open('test2.xyz','w')
@@ -139,12 +139,12 @@ class ANI(Calculator):
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
-            self.nc.setMolecule(coords=xyz.astype(np.float32), types=atom_symbols)
+            self.nc.setMolecule(coords=xyz.astype(np.float64), types=atom_symbols)
             self.Setup = False
         else:
             xyz = self.atoms.get_positions()
             # Set the conformers in NeuroChem
-            self.nc.setCoordinates(coords=xyz.astype(np.float32))
+            self.nc.setCoordinates(coords=xyz.astype(np.float64))
 
         self.nc.energy()
 
@@ -199,14 +199,14 @@ def molecule_worker(task_queue, gpuid, net_list, energy, forces, stress, net_dic
 
             if Sp == S:
                 if 'bynet' in next_task:
-                    ncl[i].setCoordinates(coords=next_task['X'][netid].astype(np.float32))
+                    ncl[i].setCoordinates(coords=next_task['X'][netid].astype(np.float64))
                 else:
-                    ncl[i].setCoordinates(coords=next_task['X'].astype(np.float32))
+                    ncl[i].setCoordinates(coords=next_task['X'].astype(np.float64))
             else:
                 if 'bynet' in next_task:
-                    ncl[i].setMolecule(next_task['X'][netid].astype(np.float32), S)
+                    ncl[i].setMolecule(next_task['X'][netid].astype(np.float64), S)
                 else:
-                    ncl[i].setMolecule(next_task['X'].astype(np.float32), S)
+                    ncl[i].setMolecule(next_task['X'].astype(np.float64), S)
 
             # Set the cell
             ncl[i].setCell(cell, pinv)
@@ -214,7 +214,8 @@ def molecule_worker(task_queue, gpuid, net_list, energy, forces, stress, net_dic
 
             energy[netid] = ncl[i].energy().copy()
             forces[netid] = ncl[i].force().copy()
-            stress[netid] = np.sum(ncl[i].get_atomic_virials().copy(),axis=0)
+            #stress[netid] = np.sum(ncl[i].get_atomic_virials().copy(),axis=0)
+            stress[netid] = np.zeros((3,3))
             #if netid == 0 and net_dict['epw']:
                 #energy[netid] += ncl[i].pwenergy()
                 #forces[netid] += ncl[i].pwforce()
@@ -483,24 +484,24 @@ class ensemblemolecule(object):
 
     def set_molecule(self, X, S):
         for nc in self.ncl:
-            nc.setMolecule(coords=np.array(X,dtype=np.float32), types=list(S))
+            nc.setMolecule(coords=np.array(X,dtype=np.float64), types=list(S))
 
         self.E = np.zeros((self.Nn), dtype=np.float64)
-        self.F = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
-        self.Q = np.zeros((self.Nn, X.shape[0],), dtype=np.float32)
+        self.F = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float64)
+        self.Q = np.zeros((self.Nn, X.shape[0],), dtype=np.float64)
 
         if self.enablepairwise:
             self.Ep = np.zeros((self.Nn), dtype=np.float64)
-            self.Fp = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float32)
+            self.Fp = np.zeros((self.Nn, X.shape[0], X.shape[1]), dtype=np.float64)
 
         self.Na = X.shape[0]
 
     def set_molecule_per_net(self, X, S):
         for nc,x in zip(self.ncl,X):
-            nc.setMolecule(coords=np.array(x,dtype=np.float32), types=list(S))
+            nc.setMolecule(coords=np.array(x,dtype=np.float64), types=list(S))
 
         self.E = np.zeros((self.Nn), dtype=np.float64)
-        self.F = np.zeros((self.Nn, X.shape[1], X.shape[2]), dtype=np.float32)
+        self.F = np.zeros((self.Nn, X.shape[1], X.shape[2]), dtype=np.float64)
 
         self.Na = X.shape[0]
 
@@ -509,7 +510,7 @@ class ensemblemolecule(object):
 
     def set_coordinates(self, X):
         for nc in self.ncl:
-            nc.setCoordinates(coords=X.astype(np.float32))
+            nc.setCoordinates(coords=X.astype(np.float64))
 
     def set_pbc(self, pbc0, pbc1, pbc2):
         for nc in self.ncl:
@@ -658,13 +659,14 @@ class ANIENS(Calculator):
     nolabel = True
 
     ### Constructor ###
-    def __init__(self, aniens, sdmax=sys.float_info.max, energy_conversion=conv_au_ev, **kwargs):
+    def __init__(self, aniens, sdmax=sys.float_info.max, energy_conversion=conv_au_ev, enable_virial_calc=False, **kwargs):
         Calculator.__init__(self, **kwargs)
 
         self.nc = aniens
         self.energy_conversion = energy_conversion
         self.sdmax = sdmax
         self.Setup = True
+        self.psys = None
 
         self.nc_time=0.0
 
@@ -678,6 +680,7 @@ class ANIENS(Calculator):
         self.hipmodels = None
 
         self.ani_off = False
+        self.virial = enable_virial_calc
 
         # Tortional Restraint List
         self.tres = []
@@ -777,44 +780,49 @@ class ANIENS(Calculator):
 
         start_time = time.time()
         ## Check if models are initilized (first step)
+        if self.atoms.get_chemical_symbols() != self.psys:
+            self.Setup = True
+
         if self.Setup or self.nc.request_setup():
             # Setup molecule for MD
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
-            #xyz = self.atoms.get_positions(wrap=any(atoms.get_pbc()))
-            xyz = self.atoms.get_positions(wrap=False)
-            self.nc.set_molecule(xyz.astype(np.float32), atom_symbols)
+            xyz = self.atoms.get_positions(wrap=any(atoms.get_pbc()))
+            #xyz = self.atoms.get_positions(wrap=True)
+            self.nc.set_molecule(xyz.astype(np.float64), atom_symbols)
             self.nc.set_pbc(bool(self.atoms.get_pbc()[0]), bool(self.atoms.get_pbc()[1]), bool(self.atoms.get_pbc()[2]))
             #self.nc.set_pbc(False,False,False)
             # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
-            pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros(
-                (3, 3), dtype=np.float32)
-            self.nc.set_cell(np.array(self.atoms.get_cell()).astype(np.float32), pbc_inv)
+            pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float64) if atoms.pbc.all() else np.zeros(
+                (3, 3), dtype=np.float64)
+            self.nc.set_cell(np.array(self.atoms.get_cell()).astype(np.float64), pbc_inv)
 
             self.Setup = False
         ## Run this if models are initialized
         else:
-            #xyz = self.atoms.get_positions(wrap=any(atoms.get_pbc())).astype(np.float32)
-            xyz = self.atoms.get_positions(wrap=False).astype(np.float32)
+            xyz = self.atoms.get_positions(wrap=any(atoms.get_pbc())).astype(np.float64)
+            #xyz = self.atoms.get_positions(wrap=True).astype(np.float64)
             # Set the conformers in NeuroChem
             self.nc.set_coordinates(xyz)
 
             # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
-            pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros(
-                (3, 3), dtype=np.float32)
-            self.nc.set_cell(np.array(self.atoms.get_cell()).astype(np.float32), pbc_inv)
+            pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float64) if atoms.pbc.all() else np.zeros(
+                (3, 3), dtype=np.float64)
+            self.nc.set_cell(np.array(self.atoms.get_cell()).astype(np.float64), pbc_inv)
 
         ## Compute the model properties (you can speed up ASE energy prediction by not doing force backprop unless needed.)
         if not self.add_bias:
             energy, force, stddev, Fstddev = self.nc.compute_mean_props(disable_ani=self.ani_off)
-            self.Fstddev = Fstddev
+            self.Fstddev = self.energy_conversion*Fstddev
         else:
-            energy, force, stddev, Fstddev = self.nc.compute_sigma_bias_potential(self.atoms.get_positions().astype(np.float32),
+            energy, force, stddev, Fstddev = self.nc.compute_sigma_bias_potential(self.atoms.get_positions().astype(np.float64),
                                                                                   self.atoms.get_chemical_symbols(),
                                                                                   self.bias_Efunc, self.bias_Ffunc,
                                                                                   epsilon=self.epsilon,
                                                                                   disable_ani=self.disable_ani_in_bias)
             self.Fstddev=Fstddev
+
+        self.psys = self.atoms.get_chemical_symbols()
         # energy = 0.0
         # force = np.zeros((len(atoms),3))
         # stddev = 0.0
@@ -822,7 +830,7 @@ class ANIENS(Calculator):
         self.nc_time+=time.time() - start_time
 
         ## convert std dev to correct units
-        self.stddev = self.energy_conversion * stddev
+        self.Estddev = self.energy_conversion * stddev
 
         ## Store energies in ASE
         self.results['energy'] = energy
@@ -837,6 +845,7 @@ class ANIENS(Calculator):
                     forces = hard_restrain_tortion_force(res, xyz, forces)
 
             self.results['forces'] = forces
+
 
         #if 'stress' in properties:
         #stress_ani = np.zeros((3,3))
@@ -866,13 +875,19 @@ class ANIENS(Calculator):
 
         #Ekin = atoms.get_kinetic_energy() / len(atoms)
         #T =  Ekin / (1.5 * units.kB)
-        stress_ani, stress_ani_sigma = self.nc.compute_stress_virial()
+        if self.virial:
+            stress_ani, stress_ani_sigma = self.nc.compute_stress_virial()
+        else:
+            stress_ani = np.zeros((3,3))
+
         #print('MATS:','\n',1602.1766208*np.eye(3)*(len(atoms) * units.kB * T)/V,' ',V,' ',T,'\n',-1602.1766208*self.energy_conversion*stress_ani/V)
         #self.results['stress'] = -(np.eye(3)*(len(atoms) * units.kB * T)/V + self.energy_conversion*stress_ani/V)
         #print(self.results['stress'])
+        #self.results['stress'] = np.zeros(6)#-self.energy_conversion * stress_ani/V
+        #self.results['stress'] = self.energy_conversion * stress_ani/V
         self.results['stress'] = -self.energy_conversion * stress_ani/V
 
-        #print(self.results['stress'])
+        #print('STRESS:\n',self.results['stress'])
 
         ## If the HIP-NN model is set run this for dipoles
         if self.hipmodels is not None:
@@ -901,7 +916,7 @@ class ANIENS(Calculator):
     def __update_neighbors(self):
         for a in range(0, len(self.atoms)):
             indices, offsets = self.nlR.get_neighbors(a)
-            self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float32))
+            self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float64))
 
     ### Return the atomic energies (in eV) ###
     def get_atomicenergies(self, atoms=None, properties=['energy'],
@@ -917,12 +932,12 @@ class ANIENS(Calculator):
             natoms = len(self.atoms)
             atom_symbols = self.atoms.get_chemical_symbols()
             xyz = self.atoms.get_positions()
-            self.nc.setMolecule(coords=xyz.astype(np.float32), types=atom_symbols)
+            self.nc.setMolecule(coords=xyz.astype(np.float64), types=atom_symbols)
             self.Setup = False
         else:
             xyz = self.atoms.get_positions()
             # Set the conformers in NeuroChem
-            self.nc.set_coordinates(xyz.astype(np.float32))
+            self.nc.set_coordinates(xyz.astype(np.float64))
 
         E = self.nc.compute_energies()
 
@@ -935,12 +950,12 @@ def aniensloader(model, gpu=0, multigpu=False):
     # Set locations of all required network files
     wkdir = model.rsplit('/', 1)[0] + '/'  # Note the relative path
 
-    data = np.loadtxt(model, dtype=str)
+    data = np.genfromtxt(model, dtype=str)
 
     cnstfile = wkdir + data[0]  # AEV parameters
     saefile = wkdir + data[1]  # Atomic shifts
     nnfdir = wkdir + data[2]  # network prefix
-    Nn = int(data[3])  # Number of networks in the ensemble
+    Nn = int(str(data[3]))  # Number of networks in the ensemble
 
     if multigpu:
         if not isinstance(gpu, list):
@@ -1167,19 +1182,19 @@ if d3present:
                 natoms = len(self.atoms)
                 atom_symbols = self.atoms.get_chemical_symbols()
                 xyz = self.atoms.get_positions()
-                self.nc.setMolecule(coords=xyz.astype(np.float32), types=atom_symbols)
+                self.nc.setMolecule(coords=xyz.astype(np.float64), types=atom_symbols)
                 self.nc.setPBC(self.atoms.get_pbc()[0], self.atoms.get_pbc()[1], self.atoms.get_pbc()[2])
     
                 self.Setup = False
             else:
                 xyz = self.atoms.get_positions()
                 # Set the conformers in NeuroChem
-                self.nc.setCoordinates(coords=xyz.astype(np.float32))
+                self.nc.setCoordinates(coords=xyz.astype(np.float64))
     
                 # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
-                pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float32) if atoms.pbc.all() else np.zeros((3, 3),
-                                                                                                                     dtype=np.float32)
-                self.nc.setCell((self.atoms.get_cell()).astype(np.float32), pbc_inv)
+                pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float64) if atoms.pbc.all() else np.zeros((3, 3),
+                                                                                                                     dtype=np.float64)
+                self.nc.setCell((self.atoms.get_cell()).astype(np.float64), pbc_inv)
                 # self.nc.setCell((self.atoms.get_cell()).astype(np.float32),(np.linalg.inv(self.atoms.get_cell())).astype(np.float32))
     
             # start_time2 = time.time()
@@ -1205,7 +1220,7 @@ if d3present:
                 # if an[a] == 8:
                 # print(an[a])
                 # szs.append(len(indices))
-                self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float32))
+                self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float64))
     
                 # indices, offsets = self.nlR.get_neighbors(302)
                 # f = open('test2.xyz','w')
@@ -1236,12 +1251,12 @@ if d3present:
                 natoms = len(self.atoms)
                 atom_symbols = self.atoms.get_chemical_symbols()
                 xyz = self.atoms.get_positions()
-                self.nc.setMolecule(coords=xyz.astype(np.float32), types=atom_symbols)
+                self.nc.setMolecule(coords=xyz.astype(np.float64), types=atom_symbols)
                 self.Setup = False
             else:
                 xyz = self.atoms.get_positions()
                 # Set the conformers in NeuroChem
-                self.nc.setCoordinates(coords=xyz.astype(np.float32))
+                self.nc.setCoordinates(coords=xyz.astype(np.float64))
     
             self.nc.energy()
     

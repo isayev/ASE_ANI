@@ -8,31 +8,32 @@
 
 namespace neurochem {
 
-/*extern void instantiate_ani_ensemble(const std::string &cnst, // Constants file
-                                     const std::string &saef, // Linear fit energy
-                                     const std::string &prfx, // Network directory prefix
-                                     const unsigned num_nets,
-                                     const unsigned gpu_idx=0);*/
-
-
 extern void instantiate_ani_ensemble(const std::string &nnf,
                                      const unsigned gpu_idx=0);
 
-extern void set_cell(const std::vector<float> &cell,
+extern void set_cell(const std::vector<double> &cell,
                      const bool x,const bool y,const bool z);
 
-
-extern double compute_ensemble_energy(const std::vector<float> &coordinates,
+extern double compute_ensemble_energy(const std::vector<double> &coordinates,
                                       const std::vector<std::string> &elements,
                                       const unsigned num_ghost=0);
 
-extern std::vector<float> get_atomic_energies(const bool sae = true);
+// Double overload
+extern std::vector<double> compute_ensemble_energy_lammps(const unsigned inum,
+                                                          const int *ilist,
+                                                          const int *numneigh,
+                                                          const int **firstneigh,
+                                                          const std::vector<double> &coordinates,
+                                                          const std::vector<std::string> &elements,
+                                                          bool sae_shift = true);
 
-extern std::vector<float> compute_ensemble_force();
+extern std::vector<double> get_atomic_energies(const bool sae = true);
 
-extern std::vector<float> compute_ensemble_atomic_virial();
+extern std::vector<double> compute_ensemble_force();
 
-extern float get_radial_cutoff();
+extern std::vector<double> compute_ensemble_atomic_virial();
+
+extern double get_radial_cutoff();
 
 extern void cleanup_ani();
 }
