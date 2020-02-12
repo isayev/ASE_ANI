@@ -8,7 +8,7 @@ This is a prototype interface for ANI-1x and ANI-1ccx neural network potentials 
 ## REQUIREMENTS:
 * Python 3.6 (we recommend [Anaconda](https://www.continuum.io/downloads) distribution)
 * Modern NVIDIA GPU, [compute capability 5.0](https://developer.nvidia.com/cuda-gpus) of newer.
-* [CUDA 9.2](https://developer.nvidia.com/cuda-downloads)
+* [CUDA 10.0](https://developer.nvidia.com/cuda-downloads)
 * [ASE](https://wiki.fysik.dtu.dk/ase/index.html)
 * MOPAC2012 or MOPAC2016 for some examples to compare results (Optional) 
 
