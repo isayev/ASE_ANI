@@ -64,7 +64,7 @@ class ANI(Calculator):
         #stress_ani = np.zeros((1, 3))
         stress_ani = np.zeros(6)
 
-        
+
         if self.Setup or self.nc.request_setup():
             #Setup molecule for MD
             natoms = len(self.atoms)
@@ -155,7 +155,7 @@ class ANI(Calculator):
 ##--------------------------------------
 def molecule_worker(task_queue, gpuid, net_list, energy, forces, stress, net_dict):
     print('Building...')
-    ncl = [pync.molecule(net_dict['cns'], net_dict['sae'], net_dict['nnf'] + str(i) + '/networks/', gpuid, False) for i
+    ncl = [pync.molecule(net_dict['cns'], net_dict['sae'], net_dict['nnf'] + str(i) + '/networks/', 1, gpuid, False) for i
            in net_list]
 
     Nn = net_dict['Nn']
@@ -246,7 +246,7 @@ class ensemblemolecule_multigpu(object):
         self.netdict = {'cns': cnstfile,
                         'sae': saefile,
                         'nnf': nnfprefix,
-                        'Nn' : self.Nn, 
+                        'Nn' : self.Nn,
                         'epw': enablepairwise}
 
         # number of cores
@@ -408,7 +408,7 @@ class ensemblemolecule_multigpu(object):
         # Compute var sqr
         v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
 
-        # Store intermediates 
+        # Store intermediates
         self.intermediates['var_sqr'] = v2
 
         return np.mean(Et, axis=0), np.mean(Ft, axis=0), np.std(Et, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(Ft, axis=0))
@@ -474,7 +474,7 @@ class ensemblemolecule(object):
         self.enablepairwise = enablepairwise
 
         # Construct pyNeuroChem molecule classes
-        self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix + str(i+net_start_id) + '/networks/', gpuid, sinet) for i in
+        self.ncl = [pync.molecule(cnstfile, saefile, nnfprefix + str(i+net_start_id) + '/networks/', 1, gpuid, sinet) for i in
                     range(self.Nn)]
 
         if enablepairwise:
@@ -567,15 +567,15 @@ class ensemblemolecule(object):
                 self.E[i] = 0.0*self.E[i]
                 self.F[i] = 0.0*self.F[i]
 
-
         # dF and C
         dF = self.F - np.mean(self.F, axis=0)[np.newaxis, :, :]
 
         # Compute var sqr
-        v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
+        E_v2 = 0.5*np.sum(np.power(self.E-np.mean(self.E),2.0))
+        F_v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
 
-        # Store intermediates 
-        self.intermediates = {'var_sqr': v2}
+        # Store intermediates
+        self.intermediates = {'E_v2': E_v2,'F_v2': F_v2, 'F_sig': np.sqrt(F_v2), 'E_sig': np.sqrt(E_v2)/np.sqrt(self.Na)}
 
         #self.intermediates['Eele'] = np.mean(self.E[:self.Nn], axis=0)
         #self.intermediates['Epws'] = np.mean(self.E[self.Nn:], axis=0)
@@ -604,34 +604,108 @@ class ensemblemolecule(object):
         self.set_molecule(X, S)
         E, F = self.compute_props()
 
+        # --------- ENERGY BIAS ---------
+        E_v2 = 0.5*np.sum(np.power(E-np.mean(E),2.0))
+        E_dx = -np.sum((E-np.mean(E)).reshape(self.Nn,1,1)*(F-np.mean(F,axis=0)),axis=0)
+
+        # --------- FORCE BIAS ----------
         # dF and C
         dF = F - np.mean(F, axis=0)[np.newaxis, :, :]
 
+        eta = epsilon/np.mean(F, axis=0).max()
+
         # Forward calc
-        self.set_molecule_per_net(X[np.newaxis, :, :] + epsilon * dF, S)
+        self.set_molecule_per_net(X[np.newaxis, :, :] + eta * dF, S)
         E1, F1 = self.compute_props()
 
         # Backward calc
-        self.set_molecule_per_net(X[np.newaxis, :, :] - epsilon * dF, S)
+        self.set_molecule_per_net(X[np.newaxis, :, :] - eta * dF, S)
         E2, F2 = self.compute_props()
 
         # Computer ds/dx via central difference
-        ds = np.sum((F1 - F2) / epsilon, axis=0) / (self.Nn * (self.Nn - 1))
+        F_dx = np.sum((F1 - F2) / (eta), axis=0) / (self.Nn * (self.Nn - 1))
 
         # Compute var sqr
-        v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
+        F_v2 = np.sum(np.sum(np.power(dF, 2), axis=0) / (self.Nn * (self.Nn - 1)))
 
-        E_bias = Efunc(v2)
-        F_bias = Ffunc(v2, ds)
+        E_bias = Efunc(F_v2, E_v2)
+        F_bias = Ffunc(F_v2, F_dx, E_v2, E_dx)
 
         Eani = np.mean(E, axis=0)
         Fani = np.mean(F, axis=0)
-        self.intermediates = {'Ebias': E_bias,'Eele': Eani,'Fbias': F_bias,'Fele': Fani,'var_sqr': v2}
+        self.intermediates = {'Ebias': E_bias,'Eele': Eani,'Fbias': F_bias,'Fele': Fani,'E_v2': E_v2,'F_v2': F_v2, 'F_sig': np.sqrt(F_v2), 'E_sig': np.sqrt(E_v2)/np.sqrt(self.Na)}
 
+        #print('!ANI disabled-2eps!')
         if not disable_ani:
-            return E_bias+Eani, F_bias+Fani, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.max(np.std(F, axis=0))
+            return E_bias+Eani, F_bias+Fani, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(F, axis=0))
         else:
-            return E_bias, F_bias, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.max(np.std(F, axis=0))
+            return E_bias, F_bias, np.std(E, axis=0) / np.sqrt(float(self.Na)), np.mean(np.std(F, axis=0))
+
+class batchedensemblemolecule(object):
+    def __init__(self, cnstfile, saefile, nnfprefix, Nnet, gpuid=0, sinet=False, forcesigma=False, enablepairwise=False, net_start_id=0):
+        # Number of networks
+        self.Nn = Nnet
+
+        self.enablepairwise = enablepairwise
+
+        # Construct pyNeuroChem molecule classes
+        self.ncl = pync.molecule(cnstfile, saefile, nnfprefix, Nnet, gpuid, sinet)
+
+        if enablepairwise:
+            self.ncl.setPairWise()
+
+
+    def set_molecule(self, X, S):
+        self.ncl.setMolecule(coords=np.array(X,dtype=np.float64), types=list(S))
+        self.Na = X.shape[0]
+
+    def request_setup(self):
+        return self.ncl.request_setup()
+
+    def set_coordinates(self, X):
+        self.ncl.setCoordinates(coords=X.astype(np.float64))
+
+    def set_pbc(self, pbc0, pbc1, pbc2):
+        self.ncl.setPBC(pbc0, pbc1, pbc2)
+
+    def set_cell(self, cell, pbc_inv):
+        self.ncl.setCell(cell, pbc_inv)
+
+    def compute_props(self):
+        self.E = self.ncl.energy().copy()
+        self.F = self.ncl.force().copy()
+        return self.E.copy(), self.F.copy()
+
+    def compute_energies(self):
+        self.E = self.ncl.energy().copy()
+        return self.E.copy()
+
+    #def compute_stress_virial(self):
+    #    self.Wi = np.zeros((self.Nn, self.Na, 3, 3))
+
+    #    for i, nc in enumerate(self.ncl):
+    #        self.Wi[i] = nc.get_atomic_virials().copy()
+
+    #    W = np.mean(self.Wi, axis=0)
+    #    return np.sum(W,axis=0),np.std(np.sum(self.Wi,axis=1),axis=0)# nEGATIVE NEEDS TO BE FIXED INSIDE NEUROCHEM rJ-rI
+
+    def compute_aenergies(self,sae):
+        Ea = self.ncl.aenergies(sae).copy()
+        return Ea
+
+    def compute_mean_props(self, disable_ani=False):
+        self.E = self.ncl.energy().copy()
+        self.F = self.ncl.force().copy()
+
+        # Store intermediates
+        self.intermediates = {'E_v2': 0,'F_v2': 0, 'F_sig': 0, 'E_sig': self.ncl.esigma()[0]}
+
+        # Return
+        return self.E[0], self.F, self.ncl.esigma()[0]/np.sqrt(self.Na), 0.0
+
+    def compute_mean_energies(self):
+        self.E = self.ncl.energy().copy()
+        return self.E, 0.0
 
 ##-------------------------------------
 ##         Cos cutoff functions
@@ -820,8 +894,7 @@ class ANIENS(Calculator):
                                                                                   self.bias_Efunc, self.bias_Ffunc,
                                                                                   epsilon=self.epsilon,
                                                                                   disable_ani=self.disable_ani_in_bias)
-            self.Fstddev=Fstddev
-
+            self.Fstddev=self.energy_conversion*Fstddev
         self.psys = self.atoms.get_chemical_symbols()
         # energy = 0.0
         # force = np.zeros((len(atoms),3))
@@ -829,14 +902,14 @@ class ANIENS(Calculator):
         # self.Fstddev = 0.0
         self.nc_time+=time.time() - start_time
 
-        ## convert std dev to correct units
+        ## cnvert std dev to correct units
         self.Estddev = self.energy_conversion * stddev
 
         ## Store energies in ASE
         self.results['energy'] = energy
         self.Emodel = energy
 
-        ## If forces are requested store forces 
+        ## If forces are requested store forces
         if 'forces' in properties:
             forces = force
 
@@ -906,7 +979,7 @@ class ANIENS(Calculator):
         ## Compute pairwise if requested
         if self.pairwise:
             self.add_pairwise(properties)
-        
+
         ## Convert energies and forces to requested units
         self.results['energy'] = self.energy_conversion * self.results['energy']
         if 'forces' in properties:
@@ -1084,10 +1157,10 @@ if d3present:
 
 
     # Class of ANI + D3 energies
-    
+
     class ANID3(Calculator):
         implemented_properties = ['energy', 'forces', 'stress']
-    
+
         default_parameters = {'xc': 'ani',
                               'bj': True,
                               'threebody': True,
@@ -1098,51 +1171,51 @@ if d3present:
                               'rs18': None,
                               's6': None,
                               'calculator': None}
-    
-    
+
+
         nolabel = True
-    
+
         def __init__(self, build=True, gpuid=0, reslist=[], **kwargs):
             Calculator.__init__(self, **kwargs)
-    
+
             if build:
                 anipath = os.path.dirname(__file__)
                 cnstfile = anipath + '/../ANI-c08f-ntwk/rHCNO-4.6A_16-3.1A_a4-8.params'
                 saefile = anipath + '/../ANI-c08f-ntwk/sae_6-31gd.dat'
                 nnfdir = anipath + '/../ANI-c08f-ntwk/networks/'
                 self.nc = pync.molecule(cnstfile, saefile, nnfdir, gpuid)
-    
+
             self.Setup = True
             self.reslist = reslist
-    
+
         def setnc(self, nc):
             self.nc = nc
-    
+
         def calculate(self, atoms=None, properties=['energy'],
                       system_changes=all_changes):
             Calculator.calculate(self, atoms, properties, system_changes)
-    
+
             xc = self.parameters.xc.lower()
             bj = self.parameters.bj
             threebody = self.parameters.threebody
             rcut = self.parameters.rcut
             rcutcn = self.parameters.rcutcn
             calculator = self.parameters.calculator
-    
+
             if bj:
                 damp = dampbj
             else:
                 damp = damp0
-    
+
             rs6 = s18 = rs18 = s6 = None
-    
+
             try:
                 rs6, s18, rs18, s6 = damp[xc]
             except KeyError:
                 unknown_functional = True
             else:
                 unknown_functional = False
-    
+
             if self.parameters.s6 is not None:
                 s6 = self.parameters.s6
             if self.parameters.s18 is not None:
@@ -1151,11 +1224,11 @@ if d3present:
                 rs6 = self.parameters.rs6
             if self.parameters.rs18 is not None:
                 rs18 = self.parameters.rs18
-    
+
             if unknown_functional and None in (s6, s18, rs6, rs18):
                 raise ValueError("Unknown functional {}! \
                         Please specify damping parameters.".format(xc))
-    
+
             # D3 calculation part
             energy_d3, forces_d3, stress_d3 = d3_calc(
                 self.atoms.get_atomic_numbers(),
@@ -1172,11 +1245,11 @@ if d3present:
                 pbc=self.atoms.get_pbc(),
                 bj=bj,
                 threebody=threebody)
-    
+
             ## make up for stress
             ## TODO
             stress_ani = np.zeros(6)
-    
+
             if self.Setup or self.nc.request_setup():
                 # Setup molecule for MD
                 natoms = len(self.atoms)
@@ -1184,33 +1257,33 @@ if d3present:
                 xyz = self.atoms.get_positions()
                 self.nc.setMolecule(coords=xyz.astype(np.float64), types=atom_symbols)
                 self.nc.setPBC(self.atoms.get_pbc()[0], self.atoms.get_pbc()[1], self.atoms.get_pbc()[2])
-    
+
                 self.Setup = False
             else:
                 xyz = self.atoms.get_positions()
                 # Set the conformers in NeuroChem
                 self.nc.setCoordinates(coords=xyz.astype(np.float64))
-    
+
                 # TODO works only for 3D periodic. For 1,2D - update np.zeros((3,3)) part
                 pbc_inv = (np.linalg.inv(self.atoms.get_cell())).astype(np.float64) if atoms.pbc.all() else np.zeros((3, 3),
                                                                                                                      dtype=np.float64)
                 self.nc.setCell((self.atoms.get_cell()).astype(np.float64), pbc_inv)
                 # self.nc.setCell((self.atoms.get_cell()).astype(np.float32),(np.linalg.inv(self.atoms.get_cell())).astype(np.float32))
-    
+
             # start_time2 = time.time()
             self.results['energy'] = conv_au_ev * self.nc.energy()[0] + energy_d3
             if 'forces' in properties:
                 forces = -conv_au_ev * self.nc.force() + forces_d3.T
-    
+
                 # restrain atoms
                 for i in self.reslist:
                     forces[i] = 0.0
-    
+
                 self.results['forces'] = forces
             self.results['stress'] = conv_au_ev * stress_ani + stress_d3.flat[[0, 4, 8, 5, 2, 1]]
             # end_time2 = time.time()
             # print('ANI Time:', end_time2 - start_time2)
-    
+
         def __update_neighbors(self):
             # print('------------------------')
             # szs = []
@@ -1221,7 +1294,7 @@ if d3present:
                 # print(an[a])
                 # szs.append(len(indices))
                 self.nc.setNeighbors(ind=a, indices=indices.astype(np.int32), offsets=offsets.astype(np.float64))
-    
+
                 # indices, offsets = self.nlR.get_neighbors(302)
                 # f = open('test2.xyz','w')
                 # f.write(str(len(indices))+'\n')
@@ -1230,22 +1303,22 @@ if d3present:
                 # for i, offset in zip(indices, offsets):
                 #    xyz = self.atoms.positions[i]
                 #    f.write(str(an[i]) + ' ' + str(xyz[0]) + ' ' + str(xyz[1]) + ' ' + str(xyz[2]) + '\n')
-    
+
                 # print(szs)
                 # plt.hist(szs, max(szs)-min(szs), normed=1, facecolor='green', alpha=0.75)
                 # plt.xlabel('Number of neighbors')
                 # plt.ylabel('Count')
                 # plt.show()
                 # print('------------------------')
-    
+
         def get_atomicenergies(self, atoms=None, properties=['energy'],
                                system_changes=all_changes):
             Calculator.calculate(self, atoms, properties, system_changes)
-    
+
             ## make up for stress
             ## TODO
             stress_ani = np.zeros((1, 3))
-    
+
             if self.Setup or self.nc.request_setup():
                 # Setup molecule for MD
                 natoms = len(self.atoms)
@@ -1257,9 +1330,9 @@ if d3present:
                 xyz = self.atoms.get_positions()
                 # Set the conformers in NeuroChem
                 self.nc.setCoordinates(coords=xyz.astype(np.float64))
-    
+
             self.nc.energy()
-    
+
             return self.nc.aenergies(True) * conv_au_ev
 
 
