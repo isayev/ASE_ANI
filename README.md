@@ -1,3 +1,5 @@
+# DEPRECATED and no longer supported, please use [TorchANI](https://github.com/aiqm/torchani) implementation
+
 # ASE-ANI
 
 ### NOTICE: Python binaries built for python 3.6 and CUDA 9.2
